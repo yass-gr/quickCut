@@ -31,7 +31,9 @@ export async function renderVideo(options: RenderOptions): Promise<string> {
     codec: "h264",
     outputLocation: outputPath,
     inputProps: options.inputProps,
-    onProgress: options.onProgress ? ({ progress }) => options.onProgress!(progress) : undefined,
+    onProgress: options.onProgress
+      ? ({ progress }) => options.onProgress!(Math.round(progress * 100))
+      : undefined,
   })
 
   return outputPath

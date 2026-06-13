@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server"
+import { NextRequest } from "next/server"
 import { renderVideo } from "@/lib/render"
 import { execSync } from "child_process"
 import path from "path"
@@ -75,18 +75,21 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
     if (!body.match || !body.prediction) {
-      return NextResponse.json({ error: "match and prediction required" }, { status: 400 })
+      return new Response(JSON.stringify({ error: "match and prediction required" }), {
+        status: 400,
+        headers: { "content-type": "application/json" },
+      })
     }
 
-    let audioFile = body.audioFile as string | null
+    const origin = new URL(request.url).origin
 
+    let audioFile = body.audioFile as string | null
     if (audioFile) {
       const trimStart = body.audioTrimStart ?? 0
       const trimEnd = body.audioTrimEnd ?? 15
       audioFile = trimAudio(audioFile, trimStart, trimEnd)
     }
 
-    // Inline logo images as data URLs so server-side Remotion can load them
     const match = body.match ? { ...body.match } : null
     if (match?.home_logo) match.home_logo = (await imageToDataUrl(match.home_logo)) || match.home_logo
     if (match?.away_logo) match.away_logo = (await imageToDataUrl(match.away_logo)) || match.away_logo
@@ -94,14 +97,48 @@ export async function POST(request: NextRequest) {
     const inputProps = {
       ...body,
       match,
-      audioUrl: audioFile ? `/api/audio/${audioFile}` : null,
+      audioUrl: audioFile ? `${origin}/api/audio/${audioFile}` : null,
       audioVolume: body.audioVolume ?? 100,
     }
 
-    const outputPath = await renderVideo({ inputProps })
-    return NextResponse.json({ success: true, outputPath })
+    const encoder = new TextEncoder()
+    const stream = new ReadableStream({
+      start(controller) {
+        const send = (event: string, data: unknown) => {
+          controller.enqueue(encoder.encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`))
+        }
+
+        send("status", { phase: "preparing" })
+
+        renderVideo({
+          inputProps,
+          onProgress: (progress) => {
+            send("progress", { percent: progress })
+          },
+        })
+          .then((outputPath) => {
+            send("done", { outputPath })
+            controller.close()
+          })
+          .catch((err) => {
+            send("error", { message: err.message })
+            controller.close()
+          })
+      },
+    })
+
+    return new Response(stream, {
+      headers: {
+        "content-type": "text/event-stream",
+        "cache-control": "no-cache",
+        connection: "keep-alive",
+      },
+    })
   } catch (error) {
     const msg = error instanceof Error ? error.message : "Render failed"
-    return NextResponse.json({ error: msg }, { status: 500 })
+    return new Response(JSON.stringify({ error: msg }), {
+      status: 500,
+      headers: { "content-type": "application/json" },
+    })
   }
 }
