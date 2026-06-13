@@ -1,55 +1,62 @@
-export interface Team {
-  name: string
-  logo?: string
-}
-
-export interface League {
-  name: string
-  logo?: string
-}
-
 export interface Match {
   id: number
-  homeTeam: Team
-  awayTeam: Team
-  league: League
+  match_home: string
+  match_away: string
+  league: string
   kickoff: string
-  status: string
+  status?: string
+  home_logo?: string
+  away_logo?: string
 }
 
-export interface Prediction {
-  matchId: number
-  probHomeWin: number
-  probDraw: number
-  probAwayWin: number
-  probBttsYes: number
-  probOver25: number
-  expectedHomeGoals: number
-  expectedAwayGoals: number
-  odds?: Record<string, number>
-  confidence?: number
+export interface Tip {
+  id: number
+  match_home: string
+  match_away: string
+  league: string
+  kickoff: string
+  _confidence: number
+  _prob_home_win: number | null
+  _prob_draw: number | null
+  _prob_away_win: number | null
+  _prob_btts_yes: number | null
+  _prob_over_25: number | null
+  _expected_home_goals: number | null
+  _expected_away_goals: number | null
+  _best_market_type: string
+  _best_market_pick: string
+  _best_market_prob?: number
+  odds_cotesport: number | null
+  venue?: { name: string; city: string } | null
 }
 
 export interface Bet {
   label: string
+  marketType: string
   value: number
-  confidence: number
 }
 
 export interface VideoTemplate {
+  id: string
+  name: string
+  description: string
   hookText: [string, string]
-  backgroundImage: string
-  fontFamily: string
   showAppDemo: boolean
+  showCta: boolean
+  betCycleSeconds: number
 }
 
-export type RenderStatus = "queued" | "rendering" | "done" | "error"
+export interface AudioTrack {
+  filename: string
+  name: string
+  duration?: number
+}
 
 export interface RenderJob {
   id: string
   matchId: number
   matchLabel: string
-  status: RenderStatus
+  status: "queued" | "rendering" | "done" | "error"
   progress: number
   outputPath?: string
   error?: string
@@ -60,7 +67,11 @@ export interface WizardState {
   apiKey: string
   backgroundImage: string | null
   selectedMatch: Match | null
-  prediction: Prediction | null
+  prediction: Tip | null
   hookText: [string, string]
+  selectedTemplate: VideoTemplate | null
+  selectedAudio: string | null
   renderQueue: RenderJob[]
 }
+
+export type WizardStep = "match" | "background" | "template" | "audio" | "preview" | "download"

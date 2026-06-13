@@ -4,26 +4,17 @@ import { renderVideo } from "@/lib/render"
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-
     if (!body.match || !body.prediction) {
-      return NextResponse.json(
-        { error: "match and prediction are required" },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: "match and prediction required" }, { status: 400 })
     }
-
-    const outputPath = await renderVideo({
-      inputProps: {
-        hookText: body.hookText || ["THE MODEL", "LOVES THIS"],
-        backgroundImage: body.backgroundImage || null,
-        match: body.match,
-        prediction: body.prediction,
-      },
-    })
-
+    const inputProps = {
+      ...body,
+      audioUrl: body.audioFile ? `/api/audio/${body.audioFile}` : null,
+    }
+    const outputPath = await renderVideo({ inputProps })
     return NextResponse.json({ success: true, outputPath })
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Render failed"
-    return NextResponse.json({ error: message }, { status: 500 })
+    const msg = error instanceof Error ? error.message : "Render failed"
+    return NextResponse.json({ error: msg }, { status: 500 })
   }
 }

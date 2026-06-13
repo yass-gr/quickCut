@@ -1,137 +1,143 @@
-import { Match, Prediction } from "@/types"
-import fs from "fs"
-import path from "path"
+import type { Match, Tip } from "@/types"
+
+let apiKey: string | null = null
+
+export function setApiKey(key: string) { apiKey = key }
+export function getApiKey(): string | null { return apiKey }
 
 const BASE_URL = "https://sports.bzzoiro.com/api"
-const CACHE_DIR = path.join(process.cwd(), "data", "cache")
-const CACHE_TTL = 5 * 60 * 1000
 
-let cachedApiKey: string | null = null
-
-function getApiKey(): string {
-  if (cachedApiKey) return cachedApiKey
-  const configPath = path.join(process.cwd(), "data", "config.json")
-  const config = JSON.parse(fs.readFileSync(configPath, "utf-8"))
-  cachedApiKey = config.bsd_api_key
-  return cachedApiKey!
-}
-
-async function fetchWithAuth(endpoint: string): Promise<Response> {
-  const apiKey = getApiKey()
-  return fetch(`${BASE_URL}${endpoint}`, {
-    headers: {
-      Authorization: `Token ${apiKey}`,
-      "Content-Type": "application/json",
-    },
+async function bsdFetch(path: string): Promise<Response> {
+  if (!apiKey) throw new Error("BSD API key not set")
+  return fetch(`${BASE_URL}${path}`, {
+    headers: { Authorization: `Token ${apiKey}` },
   })
 }
 
-function cachePath(key: string): string {
-  return path.join(CACHE_DIR, `${key}.json`)
+function getTeamName(raw: Record<string, unknown>, key: string): string {
+  const v = raw[key]
+  if (typeof v === "string") return v
+  if (v && typeof v === "object") return ((v as Record<string, unknown>)?.name as string) || ""
+  return ""
 }
 
-function readCache(key: string): unknown | null {
-  const file = cachePath(key)
-  if (!fs.existsSync(file)) return null
-  const stats = fs.statSync(file)
-  if (Date.now() - stats.mtimeMs > CACHE_TTL) return null
-  return JSON.parse(fs.readFileSync(file, "utf-8"))
+function getLeagueName(raw: Record<string, unknown>): string {
+  const v = raw.league
+  if (typeof v === "string") return v
+  if (v && typeof v === "object") return ((v as Record<string, unknown>)?.name as string) || ""
+  return ""
 }
 
-function writeCache(key: string, data: unknown): void {
-  if (!fs.existsSync(CACHE_DIR)) {
-    fs.mkdirSync(CACHE_DIR, { recursive: true })
-  }
-  fs.writeFileSync(cachePath(key), JSON.stringify(data))
+function getLogo(raw: Record<string, unknown>, key: string): string | undefined {
+  const v = raw[key]
+  if (v && typeof v === "object") return (v as Record<string, unknown>).logo as string | undefined
+  return undefined
 }
 
-function mapMatch(raw: Record<string, unknown>): Match {
+function eventToMatch(raw: Record<string, unknown>): Match {
   return {
     id: raw.id as number,
-    homeTeam: {
-      name: (raw.home_team as Record<string, unknown>)?.name as string || "Home",
-      logo: (raw.home_team as Record<string, unknown>)?.logo as string | undefined,
-    },
-    awayTeam: {
-      name: (raw.away_team as Record<string, unknown>)?.name as string || "Away",
-      logo: (raw.away_team as Record<string, unknown>)?.logo as string | undefined,
-    },
-    league: {
-      name: (raw.league as Record<string, unknown>)?.name as string || "",
-      logo: (raw.league as Record<string, unknown>)?.logo as string | undefined,
-    },
+    match_home: getTeamName(raw, "home_team"),
+    match_away: getTeamName(raw, "away_team"),
+    league: getLeagueName(raw),
     kickoff: (raw.event_date || raw.start_date || raw.kickoff || "") as string,
-    status: raw.status as string,
+    status: (raw.status as string) || "notstarted",
+    home_logo: getLogo(raw, "home_team"),
+    away_logo: getLogo(raw, "away_team"),
   }
 }
 
-function getMatchId(raw: Record<string, unknown>): number {
-  const ref = raw.match ?? raw.event ?? raw.match_id ?? raw.event_id
-  if (typeof ref === "number") return ref
-  if (ref && typeof ref === "object") return (ref as Record<string, unknown>).id as number
-  return 0
+function pct(v: unknown, def: number): number {
+  if (v == null) return def
+  const n = Number(v)
+  if (isNaN(n)) return def
+  return n <= 1 ? Math.round(n * 100) : Math.round(n)
 }
 
-function mapPrediction(raw: Record<string, unknown>): Prediction {
+function predictionToTip(pred: Record<string, unknown>, evt?: Record<string, unknown>): Tip {
+  const e = (pred.event as Record<string, unknown>) || {}
+  const hp = pct(pred.prob_home_win, 50)
+  const dp = pct(pred.prob_draw, 0)
+  const ap = pct(pred.prob_away_win, 50)
+  const probBtts = pred.prob_btts_yes != null ? pct(pred.prob_btts_yes, 50) : null
+  const probOver25 = pred.prob_over_25 != null ? pct(pred.prob_over_25, 50) : null
+
+  const contenders: { type: string; prob: number; pick: string }[] = [
+    { type: "1X2", prob: hp, pick: "1" },
+    { type: "1X2", prob: dp, pick: "X" },
+    { type: "1X2", prob: ap, pick: "2" },
+  ]
+
+  if (probBtts != null) {
+    const prob = Math.max(probBtts, 100 - probBtts)
+    contenders.push({ type: "BTTS", prob, pick: prob === probBtts ? "YES" : "NO" })
+  }
+
+  if (probOver25 != null) {
+    const prob = Math.max(probOver25, 100 - probOver25)
+    contenders.push({
+      type: "OVER/UNDER 2.5",
+      prob,
+      pick: prob === probOver25 ? "OVER 2.5" : "UNDER 2.5",
+    })
+  }
+
+  const best = contenders.reduce((a, b) => (a.prob >= b.prob ? a : b))
+  const eventId = Number(evt?.id ?? (e as { id?: number })?.id ?? pred.event_id ?? pred.match_id ?? 0)
+
   return {
-    matchId: getMatchId(raw),
-    probHomeWin: (raw.prob_home_win as number) ?? 0,
-    probDraw: (raw.prob_draw as number) ?? 0,
-    probAwayWin: (raw.prob_away_win as number) ?? 0,
-    probBttsYes: (raw.prob_btts_yes as number) ?? 0,
-    probOver25: (raw.prob_over_25 as number) ?? 0,
-    expectedHomeGoals: (raw.expected_home_goals as number) ?? 0,
-    expectedAwayGoals: (raw.expected_away_goals as number) ?? 0,
-    odds: raw.odds as Record<string, number> | undefined,
-    confidence: raw.confidence as number | undefined,
+    id: eventId,
+    match_home: evt ? eventToMatch(evt).match_home : "",
+    match_away: evt ? eventToMatch(evt).match_away : "",
+    league: evt ? eventToMatch(evt).league : "",
+    kickoff: evt ? eventToMatch(evt).kickoff : "",
+    _confidence: best.prob,
+    _prob_home_win: hp,
+    _prob_draw: dp,
+    _prob_away_win: ap,
+    _prob_btts_yes: probBtts,
+    _prob_over_25: probOver25,
+    _expected_home_goals: (pred.expected_home_goals as number) ?? null,
+    _expected_away_goals: (pred.expected_away_goals as number) ?? null,
+    _best_market_type: best.type,
+    _best_market_pick: best.pick,
+    _best_market_prob: best.prob,
+    odds_cotesport: (pred.odds as number) ?? null,
+    venue: evt?.venue ? { name: ((evt.venue as Record<string, unknown>).name as string) || "", city: ((evt.venue as Record<string, unknown>).city as string) || "" } : null,
   }
 }
 
-export async function getUpcomingMatches(): Promise<Match[]> {
-  const cached = readCache("matches")
-  if (cached) return cached as Match[]
+export async function getUpcomingMatches(): Promise<{ matches: Match[]; tips: Tip[] }> {
+  const [eventsRes, predictionsRes] = await Promise.all([
+    bsdFetch("/events/?status=notstarted&limit=200"),
+    bsdFetch("/predictions/?upcoming=true&limit=300"),
+  ])
 
-  const res = await fetchWithAuth("/events/?status=notstarted&limit=200")
-  if (!res.ok) throw new Error(`Failed to fetch matches: ${res.statusText}`)
-  const data = (await res.json()) as { results?: Record<string, unknown>[] }
-  const matches = (data.results || []).map(mapMatch)
-  writeCache("matches", matches)
-  return matches
-}
+  if (!eventsRes.ok) throw new Error(`BSD events: ${eventsRes.status}`)
+  if (!predictionsRes.ok) throw new Error(`BSD predictions: ${predictionsRes.status}`)
 
-export async function getMatchDetail(id: number): Promise<Match | null> {
-  const cached = readCache(`match-${id}`)
-  if (cached) return cached as Match
+  const eventsData = await eventsRes.json() as { results?: Record<string, unknown>[] }
+  const predictionsData = await predictionsRes.json() as { results?: Record<string, unknown>[] }
 
-  const res = await fetchWithAuth(`/events/${id}/`)
-  if (!res.ok) {
-    if (res.status === 404) return null
-    throw new Error(`Failed to fetch match ${id}: ${res.statusText}`)
+  const events = (eventsData.results || []) as Record<string, unknown>[]
+  const predictions = (predictionsData.results || []) as Record<string, unknown>[]
+
+  const predByEventId: Record<number, Record<string, unknown>> = {}
+  for (const p of predictions) {
+    const eid = (p.event as Record<string, unknown>)?.id as number | undefined
+    if (eid) predByEventId[eid] = p
   }
-  const raw = (await res.json()) as Record<string, unknown>
-  const match = mapMatch(raw)
-  writeCache(`match-${id}`, match)
-  return match
-}
 
-export async function getPredictions(): Promise<Prediction[]> {
-  const cached = readCache("predictions")
-  if (cached) return cached as Prediction[]
+  const matches: Match[] = []
+  const tips: Tip[] = []
 
-  const res = await fetchWithAuth("/predictions/?upcoming=true&limit=300")
-  if (!res.ok) throw new Error(`Failed to fetch predictions: ${res.statusText}`)
-  const data = (await res.json()) as { results?: Record<string, unknown>[] }
-  const predictions = (data.results || []).map((p) => mapPrediction(p))
-  writeCache("predictions", predictions)
-  return predictions
-}
-
-export async function getTeamLogo(url: string): Promise<ArrayBuffer | null> {
-  try {
-    const res = await fetch(url)
-    if (!res.ok) return null
-    return res.arrayBuffer()
-  } catch {
-    return null
+  for (const evt of events) {
+    const match = eventToMatch(evt)
+    matches.push(match)
+    const pred = predByEventId[evt.id as number]
+    if (pred) tips.push(predictionToTip(pred, evt))
   }
+
+  tips.sort((a, b) => b._confidence - a._confidence)
+  return { matches, tips }
 }
