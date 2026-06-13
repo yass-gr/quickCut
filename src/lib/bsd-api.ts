@@ -6,10 +6,14 @@ const BASE_URL = "https://sports.bzzoiro.com/api"
 const CACHE_DIR = path.join(process.cwd(), "data", "cache")
 const CACHE_TTL = 5 * 60 * 1000
 
+let cachedApiKey: string | null = null
+
 function getApiKey(): string {
+  if (cachedApiKey) return cachedApiKey
   const configPath = path.join(process.cwd(), "data", "config.json")
   const config = JSON.parse(fs.readFileSync(configPath, "utf-8"))
-  return config.bsd_api_key
+  cachedApiKey = config.bsd_api_key
+  return cachedApiKey!
 }
 
 async function fetchWithAuth(endpoint: string): Promise<Response> {
@@ -61,9 +65,16 @@ function mapMatch(raw: Record<string, unknown>): Match {
   }
 }
 
-function mapPrediction(raw: Record<string, unknown>, matchId: number): Prediction {
+function getMatchId(raw: Record<string, unknown>): number {
+  const ref = raw.match ?? raw.event ?? raw.match_id ?? raw.event_id
+  if (typeof ref === "number") return ref
+  if (ref && typeof ref === "object") return (ref as Record<string, unknown>).id as number
+  return 0
+}
+
+function mapPrediction(raw: Record<string, unknown>): Prediction {
   return {
-    matchId,
+    matchId: getMatchId(raw),
     probHomeWin: (raw.prob_home_win as number) ?? 0,
     probDraw: (raw.prob_draw as number) ?? 0,
     probAwayWin: (raw.prob_away_win as number) ?? 0,
@@ -110,7 +121,7 @@ export async function getPredictions(): Promise<Prediction[]> {
   const res = await fetchWithAuth("/predictions/?upcoming=true&limit=300")
   if (!res.ok) throw new Error(`Failed to fetch predictions: ${res.statusText}`)
   const data = (await res.json()) as { results?: Record<string, unknown>[] }
-  const predictions = (data.results || []).map((p, i) => mapPrediction(p, i))
+  const predictions = (data.results || []).map((p) => mapPrediction(p))
   writeCache("predictions", predictions)
   return predictions
 }
@@ -121,7 +132,7 @@ export function predictionToBets(prediction: Prediction): Bet[] {
     { label: "BTTS", value: prediction.probBttsYes, confidence: prediction.probBttsYes },
     { label: "HOME", value: prediction.probHomeWin, confidence: prediction.probHomeWin },
   ]
-  return bets.sort((a, b) => b.value - a.value)
+  return [...bets].sort((a, b) => b.value - a.value)
 }
 
 export async function getTeamLogo(url: string): Promise<ArrayBuffer | null> {
