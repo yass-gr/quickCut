@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest"
-import { predictionToBets } from "@/lib/bsd-api"
+import { predictionToBets } from "@/lib/predictions"
 import type { Prediction } from "@/types"
 
 describe("predictionToBets", () => {

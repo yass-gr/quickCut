@@ -1,4 +1,4 @@
-import { Match, Prediction, Bet } from "@/types"
+import { Match, Prediction } from "@/types"
 import fs from "fs"
 import path from "path"
 
@@ -124,15 +124,6 @@ export async function getPredictions(): Promise<Prediction[]> {
   const predictions = (data.results || []).map((p) => mapPrediction(p))
   writeCache("predictions", predictions)
   return predictions
-}
-
-export function predictionToBets(prediction: Prediction): Bet[] {
-  const bets: Bet[] = [
-    { label: "OVER 2.5", value: prediction.probOver25, confidence: prediction.probOver25 },
-    { label: "BTTS", value: prediction.probBttsYes, confidence: prediction.probBttsYes },
-    { label: "HOME", value: prediction.probHomeWin, confidence: prediction.probHomeWin },
-  ]
-  return [...bets].sort((a, b) => b.value - a.value)
 }
 
 export async function getTeamLogo(url: string): Promise<ArrayBuffer | null> {

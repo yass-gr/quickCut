@@ -1,6 +1,6 @@
 import { useVideoConfig } from "remotion"
 import { BetCycle } from "./BetCycle"
-import { predictionToBets } from "@/lib/bsd-api"
+import { predictionToBets } from "@/lib/predictions"
 import type { Match, Prediction } from "@/types"
 
 interface MatchCardProps {

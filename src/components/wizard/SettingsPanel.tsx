@@ -7,6 +7,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 export function SettingsPanel() {
   const { state, dispatch } = useWizard()
 
+  const handleApiKeyChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const key = e.target.value
+    dispatch({ type: "SET_API_KEY", payload: key })
+    fetch("/api/config", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ bsd_api_key: key }),
+    })
+  }
+
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
@@ -29,7 +39,7 @@ export function SettingsPanel() {
           <Input
             type="password"
             value={state.apiKey}
-            onChange={(e) => dispatch({ type: "SET_API_KEY", payload: e.target.value })}
+            onChange={handleApiKeyChange}
             className="bg-surface border-outline-variant text-white font-mono text-sm mt-1"
             placeholder="Enter API key..."
           />

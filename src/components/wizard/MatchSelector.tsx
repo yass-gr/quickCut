@@ -1,9 +1,9 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { useWizard } from "@/context/WizardContext"
 import { Match, Prediction } from "@/types"
-import { getUpcomingMatches, getPredictions, predictionToBets } from "@/lib/bsd-api"
+import { predictionToBets } from "@/lib/predictions"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 
@@ -14,18 +14,35 @@ export function MatchSelector() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
+  const fetchData = useCallback(async () => {
     if (!state.apiKey) return
     setLoading(true)
     setError(null)
-    Promise.all([getUpcomingMatches(), getPredictions()])
-      .then(([m, p]) => {
-        setMatches(m)
-        setPredictions(p)
-      })
-      .catch((err: unknown) => setError(err instanceof Error ? err.message : "Failed to load matches"))
-      .finally(() => setLoading(false))
+    try {
+      const [mRes, pRes] = await Promise.all([
+        fetch("/api/matches"),
+        fetch("/api/predictions"),
+      ])
+      if (!mRes.ok) {
+        const mErr = await mRes.json()
+        throw new Error(mErr.error || "Failed to fetch matches")
+      }
+      if (!pRes.ok) {
+        const pErr = await pRes.json()
+        throw new Error(pErr.error || "Failed to fetch predictions")
+      }
+      setMatches(await mRes.json())
+      setPredictions(await pRes.json())
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to load matches")
+    } finally {
+      setLoading(false)
+    }
   }, [state.apiKey])
+
+  useEffect(() => {
+    fetchData()
+  }, [fetchData])
 
   const handleSelect = (match: Match) => {
     const pred = predictions.find((p) => p.matchId === match.id)
