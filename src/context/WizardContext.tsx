@@ -1,6 +1,6 @@
 "use client"
 
-import { createContext, useContext, useReducer, useEffect, ReactNode } from "react"
+import { createContext, useContext, useReducer, useEffect, useRef, ReactNode } from "react"
 import { WizardState, Match, Prediction, RenderJob } from "@/types"
 
 const STORAGE_KEY = "quickcut-wizard-state"
@@ -64,18 +64,25 @@ const WizardContext = createContext<WizardContextValue | null>(null)
 
 export function WizardProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(reducer, initialState)
+  const isFirstRender = useRef(true)
 
   useEffect(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY)
       if (saved) {
         const parsed = JSON.parse(saved)
-        dispatch({ type: "LOAD_STATE", payload: parsed })
+        if (parsed && typeof parsed === "object" && "renderQueue" in parsed) {
+          dispatch({ type: "LOAD_STATE", payload: parsed })
+        }
       }
     } catch {}
   }, [])
 
   useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false
+      return
+    }
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
     } catch {}
