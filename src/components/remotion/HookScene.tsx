@@ -1,9 +1,13 @@
 import { AbsoluteFill, useCurrentFrame, interpolate, Easing, useVideoConfig, Img } from "remotion"
-import type { Match, Tip } from "@/types"
+import type { Match, Tip } from "../../types"
+import { t, tPick, tType, tHookSegment } from "../../lib/translations"
+import type { Language } from "../../lib/translations"
 
 interface HookSceneProps {
   hookText: [string, string]
   backgroundImage: string | null
+  backgroundPosition: string
+  language: Language
   match: Match | null
   prediction: Tip | null
 }
@@ -33,31 +37,65 @@ function teamColor(name: string): string {
   return colors[Math.abs(hash) % colors.length]
 }
 
-function BetCycle({ prediction }: { prediction: Tip | null }) {
+function BetCycle({ prediction, language }: { prediction: Tip | null; language: Language }) {
+
   const frame = useCurrentFrame()
   const { fps } = useVideoConfig()
 
   const bets = prediction
     ? [
-        { label: prediction._best_market_pick, sub: prediction._best_market_type, pct: prediction._best_market_prob ?? 50 },
-        { label: `${prediction._prob_home_win?.toFixed(0) ?? "?"}%`, sub: "HOME WIN", pct: prediction._prob_home_win ?? 50 },
-        { label: `${prediction._prob_away_win?.toFixed(0) ?? "?"}%`, sub: "AWAY WIN", pct: prediction._prob_away_win ?? 50 },
-        prediction._prob_btts_yes != null ? { label: prediction._prob_btts_yes > 50 ? "YES" : "NO", sub: "BTTS", pct: Math.max(prediction._prob_btts_yes, 100 - prediction._prob_btts_yes) } : null,
-        prediction._prob_over_25 != null ? { label: `O${prediction._prob_over_25 > 50 ? "2.5" : "2.5"}`, sub: "OVER/UNDER", pct: Math.max(prediction._prob_over_25, 100 - prediction._prob_over_25) } : null,
+        { label: tPick(language, prediction._best_market_pick), sub: tType(language, prediction._best_market_type), pct: prediction._best_market_prob ?? 50 },
+        { label: t(language, "HOME"), sub: t(language, "HOME WIN"), pct: prediction._prob_home_win ?? 50 },
+        { label: t(language, "AWAY"), sub: t(language, "AWAY WIN"), pct: prediction._prob_away_win ?? 50 },
+        prediction._prob_btts_yes != null ? { label: prediction._prob_btts_yes > 50 ? t(language, "YES") : t(language, "NO"), sub: t(language, "BOTH TO SCORE"), pct: Math.max(prediction._prob_btts_yes, 100 - prediction._prob_btts_yes) } : null,
+        prediction._prob_over_25 != null ? { label: prediction._prob_over_25 > 50 ? t(language, "OVER 2.5") : t(language, "UNDER 2.5"), sub: t(language, "TOTAL GOALS"), pct: Math.max(prediction._prob_over_25, 100 - prediction._prob_over_25) } : null,
       ].filter(Boolean) as { label: string; sub: string; pct: number }[]
     : [
-        { label: "OVER 2.5", sub: "best", pct: 82 },
-        { label: "68%", sub: "BTTS", pct: 68 },
-        { label: "45%", sub: "HOME", pct: 45 },
+        { label: t(language, "OVER 2.5"), sub: t(language, "TOTAL GOALS"), pct: 82 },
+        { label: t(language, "HOME"), sub: t(language, "HOME WIN"), pct: 68 },
+        { label: t(language, "AWAY"), sub: t(language, "AWAY WIN"), pct: 45 },
       ]
 
   const cycleDuration = Math.round(1.5 * fps)
   const cycleIndex = Math.floor(frame / cycleDuration) % bets.length
   const bet = bets[cycleIndex]
   const animFrame = frame % cycleDuration
-  const opacity = interpolate(animFrame, [0, 10, cycleDuration - 10, cycleDuration], [0, 1, 1, 0], { extrapolateRight: "clamp" })
-  const y = interpolate(animFrame, [0, 10], [14, 0], { extrapolateRight: "clamp", easing: Easing.bezier(0.16, 1, 0.3, 1) })
+
+  // Spring entrance for each bet (first 15% of cycle)
+  const betEntranceFrames = Math.round(fps * 0.15)
+  const betProgress = interpolate(animFrame, [0, betEntranceFrames], [0, 1], {
+    extrapolateRight: "clamp",
+    easing: Easing.bezier(0.175, 0.885, 0.32, 1.275),
+  })
+  const betScale = interpolate(betProgress, [0, 1], [0.95, 1], {
+    extrapolateLeft: "clamp",
+    extrapolateRight: "clamp",
+    easing: Easing.bezier(0.175, 0.885, 0.32, 1.275),
+  })
+  // Opacity: fade in using betProgress, hold, fade out using same as before but we can reuse
+  const opacityIn = interpolate(animFrame, [0, betEntranceFrames], [0, 1], {
+    extrapolateRight: "clamp",
+    easing: Easing.bezier(0.175, 0.885, 0.32, 1.275),
+  })
+  const opacityOut = interpolate(animFrame, [cycleDuration - betEntranceFrames, cycleDuration], [1, 0], {
+    extrapolateLeft: "clamp",
+  })
+  const opacity = animFrame < betEntranceFrames ? opacityIn : animFrame > cycleDuration - betEntranceFrames ? opacityOut : 1
+
+  // Small vertical bounce
+  const y = interpolate(animFrame, [0, betEntranceFrames], [18, 0], {
+    extrapolateRight: "clamp",
+    easing: Easing.bezier(0.16, 1, 0.3, 1),
+  })
+
   const color = getConfColor(bet.pct)
+
+  const glowPulse = interpolate(
+    animFrame,
+    [0, cycleDuration / 2, cycleDuration],
+    [0.3, 0.6, 0.3],
+    { extrapolateRight: "clamp" }
+  )
 
   return (
     <div
@@ -67,35 +105,140 @@ function BetCycle({ prediction }: { prediction: Tip | null }) {
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        gap: 10,
+        gap: 12,
       }}
     >
       <span style={{
-        fontFamily: "'JetBrains Mono', monospace",
-        fontSize: 26,
-        color: "#a3a3a3",
+        fontFamily: "Flick, sans-serif",
+        fontWeight: 700,
+        fontSize: 28,
+        color: "#558855",
         textTransform: "uppercase",
-        letterSpacing: "0.05em",
+        letterSpacing: "0.12em",
       }}>
         {bet.sub}
       </span>
       <span style={{
         fontFamily: "Flick, sans-serif",
         fontWeight: 700,
-        fontSize: 64,
-        color,
-        textShadow: `0 0 30px ${color}50`,
+        fontSize: 72,
+        color: "#ffffff",
+        textShadow: `0 0 ${50 * glowPulse}px ${color}${Math.round(glowPulse * 255).toString(16).padStart(2, "0")}`,
         lineHeight: 1,
+        letterSpacing: "-0.02em",
       }}>
         {bet.label}
       </span>
       <span style={{
         fontFamily: "'JetBrains Mono', monospace",
         fontWeight: 700,
-        fontSize: 36,
-        color,
+        fontSize: 40,
+        color: "#00ff41",
+        letterSpacing: "0.02em",
       }}>
         {bet.pct}%
+      </span>
+    </div>
+  )
+}
+function TeamLogo({
+  logo,
+  name,
+  size,
+  delay,
+  side,
+}: {
+  logo?: string
+  name: string
+  size: number
+  delay: number
+  side: 'left' | 'right'
+}) {
+  const frame = useCurrentFrame()
+  const { fps } = useVideoConfig()
+
+  const enterProgress = interpolate(frame, [delay, delay + Math.round(fps * 0.5)], [0, 1], {
+    extrapolateLeft: "clamp",
+    extrapolateRight: "clamp",
+    easing: Easing.bezier(0.42, 0, 0.58, 1),
+  })
+  const logoOpacity = enterProgress
+  const borderGlow = interpolate(enterProgress, [0, 1], [0, 0.3])
+
+  // Slide in from side
+  const slideDistance = 120
+  const slideOffset = side === 'left'
+    ? interpolate(enterProgress, [0, 1], [-slideDistance, 0])
+    : interpolate(enterProgress, [0, 1], [slideDistance, 0])
+
+  return (
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        gap: 18,
+        opacity: logoOpacity,
+        transform: `translateX(${slideOffset}px)`,
+      }}
+    >
+      {logo ? (
+        <div style={{ position: "relative", width: size, height: size }}>
+          <div
+            style={{
+              position: "absolute",
+              inset: -6,
+              borderRadius: "50%",
+              background: `radial-gradient(circle, rgba(0,255,65,${borderGlow}), transparent 70%)`,
+            }}
+          />
+          <Img
+            src={logo}
+            style={{
+              width: size,
+              height: size,
+              borderRadius: "50%",
+              objectFit: "contain",
+              position: "relative",
+              background: "transparent",
+            }}
+          />
+        </div>
+      ) : (
+        <div
+          style={{
+            width: size,
+            height: size,
+            borderRadius: "50%",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            background: teamColor(name),
+            boxShadow: "0 0 40px rgba(0,255,65,0.15)",
+          }}
+        >
+          <span style={{
+            fontFamily: "'JetBrains Mono', monospace",
+            fontWeight: 700,
+            fontSize: size * 0.33,
+            color: "#000",
+          }}>
+            {teamInitial(name)}
+          </span>
+        </div>
+      )}
+      <span style={{
+        fontFamily: "Flick, sans-serif",
+        fontWeight: 700,
+        fontSize: 36,
+        color: "#ffffff",
+        textShadow: "0 2px 14px rgba(0,0,0,0.9)",
+        textAlign: "center",
+        letterSpacing: "-0.01em",
+        maxWidth: 220,
+        lineHeight: 1.15,
+      }}>
+        {name}
       </span>
     </div>
   )
@@ -105,23 +248,69 @@ export function HookScene(props: HookSceneProps) {
   const frame = useCurrentFrame()
   const { fps } = useVideoConfig()
 
-  const globalOpacity = interpolate(frame, [0, Math.round(fps * 0.3)], [0, 1], { extrapolateRight: "clamp" })
-  const hookSlide = interpolate(frame, [0, fps], [-20, 0], { extrapolateRight: "clamp", easing: Easing.bezier(0.16, 1, 0.3, 1) })
-  const cardSlide = interpolate(frame, [Math.round(fps * 0.3), fps], [30, 0], { extrapolateRight: "clamp", easing: Easing.bezier(0.16, 1, 0.3, 1) })
-  const cardOpacity = interpolate(frame, [Math.round(fps * 0.3), fps], [0, 1], { extrapolateRight: "clamp" })
+  const globalOpacity = interpolate(frame, [0, Math.round(fps * 0.25)], [0, 1], { extrapolateRight: "clamp" })
+  // Background rotation
+  // Background rotation (slow triangle wave, 60s cycle, +/-0.5deg)
+  const cycleFrames = fps * 60
+  const halfCycle = cycleFrames / 2
+  const phase = frame % cycleFrames
+  let bgRotation = 0
+  if (phase < halfCycle) {
+    bgRotation = interpolate(phase, [0, halfCycle], [-0.5, 0.5], { extrapolateRight: "clamp" })
+  } else {
+    bgRotation = interpolate(phase, [halfCycle, cycleFrames], [0.5, -0.5], { extrapolateRight: "clamp" })
+  }
+  // Gradient overlay pulse (slow)
+  const gradientPulse = interpolate(frame % (fps * 8), [0, fps * 4], [1, 1.015], { extrapolateRight: "clamp" })
+  // Hook text entrance - staggered lines
+  const line1Progress = interpolate(frame, [0, Math.round(fps * 0.6)], [0, 1], {
+    extrapolateRight: "clamp",
+    easing: Easing.bezier(0.175, 0.885, 0.32, 1.275),
+  })
+  const line2Progress = interpolate(frame, [Math.round(fps * 0.15), Math.round(fps * 0.75)], [0, 1], {
+    extrapolateRight: "clamp",
+    easing: Easing.bezier(0.175, 0.885, 0.32, 1.275),
+  })
+  const hook1Y = interpolate(line1Progress, [0, 1], [-35, 0])
+  const hook2Y = interpolate(line2Progress, [0, 1], [-35, 0])
+
+  // Card entrance
+  const cardDelay = Math.round(fps * 0.4)
+  const cardProgress = interpolate(frame, [cardDelay, cardDelay + Math.round(fps * 0.5)], [0, 1], {
+    extrapolateLeft: "clamp",
+    extrapolateRight: "clamp",
+    easing: Easing.bezier(0.42, 0, 0.58, 1),
+  })
+  const cardY = interpolate(cardProgress, [0, 1], [50, 0])
+  const cardScale = interpolate(cardProgress, [0, 1], [0.95, 1], {
+    extrapolateLeft: "clamp",
+    extrapolateRight: "clamp",
+    easing: Easing.bezier(0.42, 0, 0.58, 1),
+  })
 
   const match = props.match || MOCK_MATCH
 
+  // Exit slide - slides up and fades in last 1s
+  const exitStart = Math.round(7.5 * fps)
+  const exitProgress = interpolate(frame, [exitStart, exitStart + Math.round(fps * 0.8)], [0, 1], {
+    extrapolateLeft: "clamp",
+    extrapolateRight: "clamp",
+    easing: Easing.bezier(0.2, 0, 0.3, 1),
+  })
+  const exitY = interpolate(exitProgress, [0, 1], [0, -300])
+  const exitOpacity = interpolate(exitProgress, [0, 0.5], [1, 0], { extrapolateLeft: "clamp", extrapolateRight: "clamp" })
+
   return (
-    <AbsoluteFill style={{ opacity: globalOpacity }}>
+    <AbsoluteFill style={{ opacity: globalOpacity * exitOpacity, transform: `translateY(${exitY}px) scale(${interpolate(exitProgress, [0, 1], [1, 0.95])})` }}>
       {/* Background image */}
       <div
         style={{
           position: "absolute",
           inset: 0,
           background: props.backgroundImage
-            ? `url(${props.backgroundImage}) center/cover`
-            : "linear-gradient(135deg, #1a3a2e, #2d1a1a)",
+            ? `url(${props.backgroundImage}) ${props.backgroundPosition}/cover`
+            : "linear-gradient(135deg, #0a1f12 0%, #1a0a0a 50%, #0a1f12 100%)",
+          transform: `rotate(${bgRotation}deg) scale(1.12)`,
         }}
       />
       {/* Gradient overlay */}
@@ -129,7 +318,17 @@ export function HookScene(props: HookSceneProps) {
         style={{
           position: "absolute",
           inset: 0,
-          background: "linear-gradient(180deg, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.1) 20%, rgba(0,0,0,0.35) 50%, rgba(0,0,0,0.8) 100%)",
+        transform: `scale(${gradientPulse})`,
+          background: "linear-gradient(180deg, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.05) 25%, rgba(0,0,0,0.2) 50%, rgba(0,0,0,0.85) 100%)",
+        }}
+      />
+
+      {/* Subtle radial accent */}
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          background: "radial-gradient(ellipse at 50% 35%, rgba(0,255,65,0.04), transparent 60%)",
         }}
       />
 
@@ -139,163 +338,143 @@ export function HookScene(props: HookSceneProps) {
           inset: 0,
           display: "flex",
           flexDirection: "column",
-          padding: "180px 50px 180px",
+          padding: "140px 48px 120px",
         }}
       >
         {/* Hook */}
-        <div
-          style={{
-            transform: `translateY(${hookSlide}px)`,
-          }}
-        >
+        <div style={{ marginTop: 180 }}>
           <div style={{
             fontFamily: "Flick, sans-serif",
             fontWeight: 700,
-            fontSize: 96,
-            color: "#ffffff",
-            lineHeight: 1.15,
-            textShadow: "0 4px 25px rgba(0,0,0,1)",
+            fontSize: 100,
+        color: "#00ff41",
+            lineHeight: 1.05,
+            textShadow: "0 4px 30px rgba(0,0,0,1)",
+            transform: `translateY(${hook1Y}px)`,
+            opacity: line1Progress,
           }}>
-            {props.hookText[0]}
-            <br />
-            <span style={{
-              color: "#00ff41",
-              fontSize: 120,
-              textShadow: "0 0 50px rgba(0,255,65,0.4)",
-            }}>
-              {props.hookText[1]}
-            </span>
+            {tHookSegment(props.language, props.hookText[0], props.hookText[1], 0)}
+          </div>
+          <div style={{
+            fontFamily: "Flick, sans-serif",
+            fontWeight: 700,
+            fontSize: 128,
+            color: "#00ff41",
+            textShadow: "0 0 60px rgba(0,255,65,0.4), 0 4px 30px rgba(0,0,0,1)",
+            lineHeight: 1.05,
+            marginTop: 4,
+            transform: `translateY(${hook2Y}px)`,
+            opacity: line2Progress,
+          }}>
+            {tHookSegment(props.language, props.hookText[0], props.hookText[1], 1)}
           </div>
         </div>
 
         {/* Spacer */}
-        <div style={{ flex: 0.5 }} />
+        <div style={{ flex: 0.15 }} />
 
-        {/* Match Card */}
+        {/* Match Card - BIG */}
         <div
           style={{
-            opacity: cardOpacity,
-            transform: `translateY(${cardSlide}px)`,
-            background: "rgba(0,0,0,0.55)",
-            backdropFilter: "blur(8px)",
-            WebkitBackdropFilter: "blur(8px)",
-            border: "2px solid rgba(0,255,65,0.25)",
+            opacity: cardProgress,
+            transform: `translateY(${cardY}px) scale(${cardScale})`,
+            background: "rgba(3,8,3,0.7)",
+            backdropFilter: "blur(12px)",
+            WebkitBackdropFilter: "blur(12px)",
+            border: "1px solid rgba(0,255,65,0.15)",
             borderRadius: 24,
-            padding: "36px 28px",
+            padding: "40px 48px",
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
-            gap: 18,
+            gap: 28,
+            boxShadow: "0 12px 80px rgba(0,0,0,0.7), 0 0 120px rgba(0,255,65,0.05)",
           }}
         >
-          {/* FULL TIME badge */}
+          {/* League + FULL TIME badge */}
           <div style={{
-            fontFamily: "'JetBrains Mono', monospace",
-            fontSize: 28,
-            color: "#00ff41",
-            letterSpacing: "0.15em",
-            textTransform: "uppercase",
-            background: "rgba(0,255,65,0.1)",
-            border: "1px solid rgba(0,255,65,0.25)",
-            borderRadius: 5,
-            padding: "8px 24px",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: 30,
           }}>
-            FULL TIME
+            <div style={{
+              fontFamily: "'JetBrains Mono', monospace",
+              fontSize: 20,
+              color: "#00ff41",
+              letterSpacing: "0.15em",
+              textTransform: "uppercase",
+              background: "rgba(0,255,65,0.08)",
+              border: "1px solid rgba(0,255,65,0.2)",
+              borderRadius: 8,
+              padding: "8px 24px",
+              fontWeight: 600,
+            }}>
+              {t(props.language, "FULL TIME")}
+            </div>
+            <span style={{
+              fontFamily: "'JetBrains Mono', monospace",
+              fontSize: 22,
+              color: "#558855",
+              letterSpacing: "0.08em",
+              textTransform: "uppercase",
+              fontWeight: 500,
+            }}>
+              {match.league}
+            </span>
           </div>
 
           {/* Logos + Bet cycle row */}
           <div style={{
             display: "flex",
             alignItems: "center",
-            gap: 80,
+            justifyContent: "center",
+            gap: 16,
+            width: "100%",
             marginTop: 8,
           }}>
-            {/* Home */}
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 14 }}>
-              {match.home_logo ? (
-                <Img
-                  src={match.home_logo}
-                  style={{ width: 110, height: 110, borderRadius: "50%", objectFit: "contain", border: "2.5px solid rgba(0,255,65,0.3)" }}
-                />
-              ) : (
-                <div style={{
-                  width: 110, height: 110, borderRadius: "50%",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  background: teamColor(match.match_home),
-                  border: "2.5px solid rgba(0,255,65,0.3)",
-                  boxShadow: "0 0 20px rgba(0,255,65,0.15)",
-                }}>
-                  <span style={{
-                    fontFamily: "'JetBrains Mono', monospace",
-                    fontWeight: 700,
-                    fontSize: 36,
-                    color: "#000",
-                  }}>
-                    {teamInitial(match.match_home)}
-                  </span>
-                </div>
-              )}
-              <span style={{
-                fontFamily: "Flick, sans-serif",
-                fontSize: 34,
-                color: "#ffffff",
-                textShadow: "0 2px 10px rgba(0,0,0,0.8)",
-                textAlign: "center",
-              }}>
-                {match.match_home}
-              </span>
+            <TeamLogo
+              logo={match.home_logo}
+              name={match.match_home}
+              size={228}
+              delay={cardDelay + Math.round(fps * 0.15)}
+              side="left"
+            />
+
+            <div style={{ flex: 1, display: "flex", justifyContent: "center" }}>
+              <BetCycle prediction={props.prediction} language={props.language} />
             </div>
 
-            {/* Bet cycles here */}
-            <BetCycle prediction={props.prediction} />
-
-            {/* Away */}
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 14 }}>
-              {match.away_logo ? (
-                <Img
-                  src={match.away_logo}
-                  style={{ width: 110, height: 110, borderRadius: "50%", objectFit: "contain", border: "2.5px solid rgba(0,255,65,0.3)" }}
-                />
-              ) : (
-                <div style={{
-                  width: 110, height: 110, borderRadius: "50%",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  background: teamColor(match.match_away),
-                  border: "2.5px solid rgba(0,255,65,0.3)",
-                  boxShadow: "0 0 20px rgba(0,255,65,0.15)",
-                }}>
-                  <span style={{
-                    fontFamily: "'JetBrains Mono', monospace",
-                    fontWeight: 700,
-                    fontSize: 36,
-                    color: "#000",
-                  }}>
-                    {teamInitial(match.match_away)}
-                  </span>
-                </div>
-              )}
-              <span style={{
-                fontFamily: "Flick, sans-serif",
-                fontSize: 34,
-                color: "#ffffff",
-                textShadow: "0 2px 10px rgba(0,0,0,0.8)",
-                textAlign: "center",
-              }}>
-                {match.match_away}
-              </span>
-            </div>
+            <TeamLogo
+              logo={match.away_logo}
+              name={match.match_away}
+              size={228}
+              delay={cardDelay + Math.round(fps * 0.25)}
+              side="right"
+            />
           </div>
+
+          {/* Subtle bottom accent line */}
+          <div style={{
+            width: 70,
+            height: 2,
+            background: "linear-gradient(90deg, transparent, rgba(0,255,65,0.3), transparent)",
+            marginTop: 8,
+          }} />
         </div>
 
         {/* Watermark */}
         <div style={{
           fontFamily: "'JetBrains Mono', monospace",
-          fontSize: 14,
-          color: "rgba(0,255,65,0.25)",
+          fontSize: 15,
+          color: "rgba(0,255,65,0.18)",
           textAlign: "center",
           marginTop: "auto",
+          letterSpacing: "0.2em",
+          textTransform: "uppercase",
+          fontWeight: 500,
         }}>
-          MSSOUGRA AI
+          {t(props.language, "MSSOUGRA AI")}
         </div>
       </div>
     </AbsoluteFill>
