@@ -1,6 +1,7 @@
 import { useVideoConfig } from "remotion"
 import { BetCycle } from "./BetCycle"
-import type { Match, Prediction, Bet } from "@/types"
+import { predictionToBets } from "@/lib/bsd-api"
+import type { Match, Prediction } from "@/types"
 
 interface MatchCardProps {
   match: Match
@@ -15,11 +16,7 @@ export function MatchCard({ match, prediction }: MatchCardProps) {
   const { fps } = useVideoConfig()
   const fps8s = 8 * fps
 
-  const bets: Bet[] = [
-    { label: "OVER 2.5", value: prediction.probOver25, confidence: prediction.probOver25 },
-    { label: "BTTS", value: prediction.probBttsYes, confidence: prediction.probBttsYes },
-    { label: "HOME", value: prediction.probHomeWin, confidence: prediction.probHomeWin },
-  ]
+  const bets = predictionToBets(prediction)
 
   const cycleFrames = Math.floor(fps8s / bets.length)
   const transitionFrames = Math.floor(fps * 0.3)

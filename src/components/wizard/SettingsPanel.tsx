@@ -10,11 +10,11 @@ export function SettingsPanel() {
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
-      if (state.backgroundImage?.startsWith("blob:")) {
-        URL.revokeObjectURL(state.backgroundImage)
+      const reader = new FileReader()
+      reader.onload = () => {
+        dispatch({ type: "SET_BACKGROUND", payload: reader.result as string })
       }
-      const url = URL.createObjectURL(file)
-      dispatch({ type: "SET_BACKGROUND", payload: url })
+      reader.readAsDataURL(file)
     }
   }
 
