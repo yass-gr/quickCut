@@ -5,10 +5,10 @@ import { useWizard } from "@/context/WizardContext"
 import { Input } from "@/components/ui/input"
 import type { VideoTemplate } from "@/types"
 
-const TEMPLATE_DESCRIPTIONS: Record<string, string> = {
-  standard: "Hook + Card + App Demo + CTA (15s)",
-  "card-focus": "Hook + Card + CTA (12s)",
-  quick: "Hook + CTA (8s)",
+const DURATION_MAP: Record<string, number> = {
+  standard: 15,
+  "card-focus": 12,
+  quick: 12,
 }
 
 export function StepTemplate() {
@@ -54,7 +54,7 @@ export function StepTemplate() {
               <p className="font-flick text-base text-white">{t.name}</p>
               <p className="font-mono text-xs mt-2" style={{ color: "#a3a3a3" }}>{t.description}</p>
               <p className="font-mono text-[10px] mt-1" style={{ color: "#558855" }}>
-                {TEMPLATE_DESCRIPTIONS[t.id] || ""}
+                Duration: {DURATION_MAP[t.id]}s
               </p>
             </button>
           )

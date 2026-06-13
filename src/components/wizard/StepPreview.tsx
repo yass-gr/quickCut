@@ -4,6 +4,13 @@ import { useWizard } from "@/context/WizardContext"
 import dynamic from "next/dynamic"
 import { useState, useEffect, useRef } from "react"
 import type { ComponentType } from "react"
+import type { Language } from "@/lib/translations"
+
+const LANGS: { key: Language; label: string }[] = [
+  { key: "en", label: "EN" },
+  { key: "fr", label: "FR" },
+  { key: "darija", label: "الدارجة" },
+]
 
 const Player = dynamic(
   () => import("@remotion/player").then((mod) => mod.Player as unknown as ComponentType<any>),
@@ -16,7 +23,7 @@ const QuickCutVideoComponent = dynamic(
 )
 
 export function StepPreview() {
-  const { state } = useWizard()
+  const { state, dispatch } = useWizard()
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const [trimming, setTrimming] = useState(false)
   const trimTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -77,6 +84,23 @@ export function StepPreview() {
           className="aspect-[9/16] w-full max-w-[360px] rounded-lg overflow-hidden relative"
           style={{ background: "#000", border: "1px solid #1b4d1b" }}
         >
+          <div className="absolute top-2 right-2 z-20 flex gap-1">
+            {LANGS.map((l) => (
+              <button
+                key={l.key}
+                onClick={() => dispatch({ type: "SET_LANGUAGE", payload: l.key })}
+                className="text-xs font-mono px-2 py-1 rounded transition-colors"
+                style={{
+                  background: state.language === l.key ? "#00ff41" : "rgba(255,255,255,0.1)",
+                  color: state.language === l.key ? "#000" : "#fff",
+                  border: "1px solid",
+                  borderColor: state.language === l.key ? "#00ff41" : "#1b4d1b",
+                }}
+              >
+                {l.label}
+              </button>
+            ))}
+          </div>
           {trimming && (
             <div className="absolute inset-0 flex items-center justify-center z-10 bg-black/60">
               <p className="text-xs font-mono" style={{ color: "#a3a3a3" }}>Trimming audio...</p>
@@ -91,6 +115,8 @@ export function StepPreview() {
             inputProps={{
               hookText: state.hookText,
               backgroundImage: state.backgroundImage,
+              backgroundPosition: state.backgroundPosition,
+              language: state.language,
               match: state.selectedMatch,
               prediction: state.prediction,
               audioUrl: previewUrl,
