@@ -23,7 +23,7 @@ export function MatchSelector() {
         setMatches(m)
         setPredictions(p)
       })
-      .catch((err) => setError(err.message))
+      .catch((err: unknown) => setError(err instanceof Error ? err.message : "Failed to load matches"))
       .finally(() => setLoading(false))
   }, [state.apiKey])
 

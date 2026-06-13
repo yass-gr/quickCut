@@ -2,7 +2,6 @@
 
 import { useWizard } from "@/context/WizardContext"
 import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
 export function SettingsPanel() {
@@ -11,6 +10,9 @@ export function SettingsPanel() {
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
+      if (state.backgroundImage?.startsWith("blob:")) {
+        URL.revokeObjectURL(state.backgroundImage)
+      }
       const url = URL.createObjectURL(file)
       dispatch({ type: "SET_BACKGROUND", payload: url })
     }
