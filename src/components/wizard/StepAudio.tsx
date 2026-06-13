@@ -5,6 +5,12 @@ import { useWizard } from "@/context/WizardContext"
 import { Input } from "@/components/ui/input"
 import type { AudioTrack } from "@/types"
 
+let ctx: AudioContext | null = null
+function getCtx() {
+  if (!ctx) ctx = new AudioContext()
+  return ctx
+}
+
 export function StepAudio() {
   const { state, dispatch } = useWizard()
   const [tracks, setTracks] = useState<AudioTrack[]>([])
@@ -12,16 +18,17 @@ export function StepAudio() {
   const [trackDuration, setTrackDuration] = useState(0)
   const [playing, setPlaying] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
-  const audioRef = useRef<HTMLAudioElement | null>(null)
+  const bufferRef = useRef<AudioBuffer | null>(null)
+  const sourceRef = useRef<AudioBufferSourceNode | null>(null)
+  const gainRef = useRef<GainNode | null>(null)
   const playingRef = useRef(false)
-  const trimEndRef = useRef(state.audioTrimEnd)
+  const rafRef = useRef(0)
+  const startTimeRef = useRef(0)
   const trimStartRef = useRef(state.audioTrimStart)
+  const trimEndRef = useRef(state.audioTrimEnd)
 
-  useEffect(() => { trimEndRef.current = state.audioTrimEnd }, [state.audioTrimEnd])
   useEffect(() => { trimStartRef.current = state.audioTrimStart }, [state.audioTrimStart])
-  useEffect(() => {
-    if (audioRef.current) audioRef.current.volume = state.audioVolume / 100
-  }, [state.audioVolume])
+  useEffect(() => { trimEndRef.current = state.audioTrimEnd }, [state.audioTrimEnd])
 
   useEffect(() => {
     fetch("/api/audio")
@@ -32,89 +39,100 @@ export function StepAudio() {
 
   useEffect(() => {
     if (!state.selectedAudio) {
+      bufferRef.current = null
       setTrackDuration(0)
-      setPlaying(false)
-      playingRef.current = false
       return
     }
     const url = `/api/audio/${state.selectedAudio}`
-    const el = new Audio(url)
-    el.volume = state.audioVolume / 100
-    audioRef.current = el
-    el.preload = "metadata"
-    el.addEventListener("loadedmetadata", () => {
-      const dur = el.duration
-      const end = Math.min(dur, 15)
-      setTrackDuration(dur)
-      setCurrentTime(0)
-      trimStartRef.current = 0
-      trimEndRef.current = end
-      dispatch({ type: "SET_AUDIO_TRIM_START", payload: 0 })
-      dispatch({ type: "SET_AUDIO_TRIM_END", payload: end })
-    })
-    el.addEventListener("timeupdate", () => {
-      setCurrentTime(el.currentTime)
-      if (el.currentTime >= trimEndRef.current) {
-        el.pause()
-        setPlaying(false)
-        playingRef.current = false
-      }
-    })
-    el.addEventListener("ended", () => {
-      setPlaying(false)
-      playingRef.current = false
-    })
+    const ac = getCtx()
+    fetch(url)
+      .then((r) => r.arrayBuffer())
+      .then((buf) => ac.decodeAudioData(buf))
+      .then((decoded) => {
+        bufferRef.current = decoded
+        const dur = decoded.duration
+        setTrackDuration(dur)
+        const end = Math.min(dur, 15)
+        trimStartRef.current = 0
+        trimEndRef.current = end
+        dispatch({ type: "SET_AUDIO_TRIM_START", payload: 0 })
+        dispatch({ type: "SET_AUDIO_TRIM_END", payload: end })
+      })
+      .catch(() => {})
     return () => {
-      el.pause()
-      el.remove()
-      audioRef.current = null
+      stop()
     }
   }, [state.selectedAudio, dispatch])
 
+  function stop() {
+    if (rafRef.current) cancelAnimationFrame(rafRef.current)
+    rafRef.current = 0
+    try { sourceRef.current?.stop() } catch {}
+    sourceRef.current?.disconnect()
+    gainRef.current?.disconnect()
+    sourceRef.current = null
+    gainRef.current = null
+    playingRef.current = false
+    setPlaying(false)
+  }
+
+  function tick() {
+    if (!playingRef.current) return
+    const elapsed = getCtx().currentTime - startTimeRef.current + trimStartRef.current
+    const pos = Math.min(elapsed, trimEndRef.current)
+    setCurrentTime(pos)
+    if (pos >= trimEndRef.current) {
+      stop()
+      return
+    }
+    rafRef.current = requestAnimationFrame(tick)
+  }
+
   const togglePlay = () => {
-    const el = audioRef.current
-    if (!el || trackDuration === 0) return
+    const buf = bufferRef.current
+    if (!buf || trackDuration === 0) return
 
     if (playingRef.current) {
-      el.pause()
-      setPlaying(false)
-      playingRef.current = false
-    } else {
-      const target = trimStartRef.current
-      setPlaying(true)
-      playingRef.current = true
-      el.currentTime = target
-      setCurrentTime(target)
-
-      const startPlay = () => {
-        el.play().catch(() => {
-          setPlaying(false)
-          playingRef.current = false
-        })
-      }
-
-      const onSeeked = () => {
-        el.removeEventListener("seeked", onSeeked)
-        startPlay()
-      }
-      el.addEventListener("seeked", onSeeked, { once: true })
-      setTimeout(() => {
-        el.removeEventListener("seeked", onSeeked)
-        if (!playingRef.current) return
-        startPlay()
-      }, 300)
+      stop()
+      return
     }
+
+    const ac = getCtx()
+    ac.resume()
+
+    const gain = ac.createGain()
+    gain.gain.value = state.audioVolume / 100
+    gain.connect(ac.destination)
+    gainRef.current = gain
+
+    const src = ac.createBufferSource()
+    src.buffer = buf
+    src.connect(gain)
+
+    const offset = trimStartRef.current
+    const dur = trimEndRef.current - trimStartRef.current
+
+    src.start(0, offset, dur)
+    sourceRef.current = src
+    startTimeRef.current = ac.currentTime
+    playingRef.current = true
+    setPlaying(true)
+    setCurrentTime(offset)
+
+    src.onended = () => stop()
+    rafRef.current = requestAnimationFrame(tick)
   }
+
+  useEffect(() => {
+    if (gainRef.current) gainRef.current.gain.value = state.audioVolume / 100
+  }, [state.audioVolume])
 
   const handleTrimStartChange = (val: number) => {
     dispatch({ type: "SET_AUDIO_TRIM_START", payload: val })
     trimStartRef.current = val
-    const el = audioRef.current
-    if (el && playingRef.current) {
-      if (el.currentTime < val) {
-        el.currentTime = val
-        setCurrentTime(val)
-      }
+    if (playingRef.current) {
+      stop()
+      togglePlay()
     }
   }
 
@@ -128,7 +146,6 @@ export function StepAudio() {
     setTracks(updated)
   }
 
-  const segLen = Math.max(0, state.audioTrimEnd - state.audioTrimStart)
   const maxEnd = trackDuration > 0 ? trackDuration : 15
 
   return (
