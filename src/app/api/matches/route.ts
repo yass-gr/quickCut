@@ -60,8 +60,10 @@ export async function GET(request: NextRequest) {
     const logoMap = Object.fromEntries(logoResults)
 
     for (const m of matches) {
-      m.home_logo = logoMap[m.match_home] || undefined
-      m.away_logo = logoMap[m.match_away] || undefined
+      const hl = logoMap[m.match_home]
+      const al = logoMap[m.match_away]
+      m.home_logo = hl ? `/api/logo-proxy?url=${encodeURIComponent(hl)}` : undefined
+      m.away_logo = al ? `/api/logo-proxy?url=${encodeURIComponent(al)}` : undefined
     }
 
     return NextResponse.json({ matches, tips })
