@@ -1,4 +1,4 @@
-import { AbsoluteFill, useCurrentFrame, interpolate, Easing, useVideoConfig, Img } from "remotion"
+import { AbsoluteFill, useCurrentFrame, interpolate, Easing, useVideoConfig } from "remotion"
 import type { Match, Tip } from "@/types"
 
 interface HookSceneProps {
@@ -20,6 +20,17 @@ function getConfColor(pct: number): string {
   if (pct >= 80) return "#5CFF6A"
   if (pct >= 60) return "#00ff41"
   return "#a3a3a3"
+}
+
+function teamInitial(name: string): string {
+  return name.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase() || "?"
+}
+
+function teamColor(name: string): string {
+  let hash = 0
+  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash)
+  const colors = ["#00ff41", "#5CFF6A", "#00cc33", "#4ade80", "#22c55e", "#16a34a", "#15803d", "#166534"]
+  return colors[Math.abs(hash) % colors.length]
 }
 
 function BetCycle({ prediction }: { prediction: Tip | null }) {
@@ -201,21 +212,22 @@ export function HookScene(props: HookSceneProps) {
           }}>
             {/* Home */}
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 14 }}>
-              {match.home_logo && match.home_logo !== "" ? (
-                <Img
-                  src={match.home_logo}
-                  style={{ width: 110, height: 110, borderRadius: "50%", objectFit: "contain", border: "2.5px solid rgba(0,255,65,0.3)" }}
-                />
-              ) : (
-                <div style={{
-                  width: 110, height: 110, borderRadius: "50%",
-                  border: "2.5px solid rgba(0,255,65,0.3)",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  background: "rgba(255,255,255,0.05)",
+              <div style={{
+                width: 110, height: 110, borderRadius: "50%",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                background: teamColor(match.match_home),
+                border: "2.5px solid rgba(0,255,65,0.3)",
+                boxShadow: "0 0 20px rgba(0,255,65,0.15)",
+              }}>
+                <span style={{
+                  fontFamily: "'JetBrains Mono', monospace",
+                  fontWeight: 700,
+                  fontSize: 36,
+                  color: "#000",
                 }}>
-                  <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 32, color: "#558855" }}>H</span>
-                </div>
-              )}
+                  {teamInitial(match.match_home)}
+                </span>
+              </div>
               <span style={{
                 fontFamily: "Flick, sans-serif",
                 fontSize: 34,
@@ -232,21 +244,22 @@ export function HookScene(props: HookSceneProps) {
 
             {/* Away */}
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 14 }}>
-              {match.away_logo && match.away_logo !== "" ? (
-                <Img
-                  src={match.away_logo}
-                  style={{ width: 110, height: 110, borderRadius: "50%", objectFit: "contain", border: "2.5px solid rgba(0,255,65,0.3)" }}
-                />
-              ) : (
-                <div style={{
-                  width: 110, height: 110, borderRadius: "50%",
-                  border: "2.5px solid rgba(0,255,65,0.3)",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  background: "rgba(255,255,255,0.05)",
+              <div style={{
+                width: 110, height: 110, borderRadius: "50%",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                background: teamColor(match.match_away),
+                border: "2.5px solid rgba(0,255,65,0.3)",
+                boxShadow: "0 0 20px rgba(0,255,65,0.15)",
+              }}>
+                <span style={{
+                  fontFamily: "'JetBrains Mono', monospace",
+                  fontWeight: 700,
+                  fontSize: 36,
+                  color: "#000",
                 }}>
-                  <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 32, color: "#558855" }}>A</span>
-                </div>
-              )}
+                  {teamInitial(match.match_away)}
+                </span>
+              </div>
               <span style={{
                 fontFamily: "Flick, sans-serif",
                 fontSize: 34,
