@@ -1,0 +1,9 @@
+{
+  "id": "card-focus",
+  "name": "Card Focus",
+  "description": "Emphasizes the match card, shorter hook, no App Demo",
+  "hookText": ["TODAY'S", "MATCH"],
+  "showAppDemo": false,
+  "showCta": true,
+  "betCycleSeconds": 2.5
+}
