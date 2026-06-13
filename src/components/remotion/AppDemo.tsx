@@ -159,7 +159,7 @@ export function AppDemo({ match, prediction }: AppDemoProps) {
         {/* Labels */}
         <div style={{
           fontFamily: "Flick, sans-serif",
-          fontSize: 28,
+          fontSize: 36,
           color: "#00ff41",
           textShadow: "0 2px 10px rgba(0,0,0,0.8)",
         }}>
@@ -167,7 +167,7 @@ export function AppDemo({ match, prediction }: AppDemoProps) {
         </div>
         <div style={{
           fontFamily: "'JetBrains Mono', monospace",
-          fontSize: 14,
+          fontSize: 18,
           color: "#a3a3a3",
         }}>
           MSSOUGRA app demo

@@ -28,9 +28,22 @@ function getLeagueName(raw: Record<string, unknown>): string {
   return ""
 }
 
+const BSD_BASE = "https://sports.bzzoiro.com"
+
+function resolveUrl(url: string | undefined): string | undefined {
+  if (!url) return undefined
+  if (url.startsWith("http://") || url.startsWith("https://")) return url
+  // relative path — prepend BSD base
+  return `${BSD_BASE}${url.startsWith("/") ? "" : "/"}${url}`
+}
+
 function getLogo(raw: Record<string, unknown>, key: string): string | undefined {
   const v = raw[key]
-  if (v && typeof v === "object") return (v as Record<string, unknown>).logo as string | undefined
+  if (v && typeof v === "object") {
+    const obj = v as Record<string, unknown>
+    const logo = (obj.logo as string) || (obj.flag as string) || undefined
+    return resolveUrl(logo)
+  }
   return undefined
 }
 

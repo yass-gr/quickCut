@@ -26,27 +26,27 @@ export function CtaScene({ hookText }: CtaSceneProps) {
           flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
-          gap: 16,
+          gap: 24,
           transform: `scale(${scale})`,
         }}
       >
         {/* AI Logo */}
         <div
           style={{
-            width: 56,
-            height: 56,
-            borderRadius: 10,
+            width: 80,
+            height: 80,
+            borderRadius: 14,
             background: "linear-gradient(135deg, #00ff41, #00cc33)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
             transform: `scale(${logoZoom})`,
-            boxShadow: "0 0 30px rgba(0,255,65,0.2)",
+            boxShadow: "0 0 40px rgba(0,255,65,0.25)",
           }}
         >
           <span style={{
             fontFamily: "'JetBrains Mono', monospace",
-            fontSize: 28,
+            fontSize: 36,
             fontWeight: 700,
             color: "#000",
           }}>
@@ -58,9 +58,9 @@ export function CtaScene({ hookText }: CtaSceneProps) {
         <div style={{
           fontFamily: "Flick, sans-serif",
           fontWeight: 700,
-          fontSize: 52,
+          fontSize: 72,
           color: "#ffffff",
-          textShadow: "0 2px 15px rgba(0,0,0,0.8)",
+          textShadow: "0 2px 20px rgba(0,0,0,0.8)",
           letterSpacing: "0.02em",
         }}>
           MSSOUGRA
@@ -68,8 +68,8 @@ export function CtaScene({ hookText }: CtaSceneProps) {
 
         {/* Green divider */}
         <div style={{
-          width: 32,
-          height: 3,
+          width: 48,
+          height: 4,
           background: "#00ff41",
           borderRadius: 2,
         }} />
@@ -77,13 +77,13 @@ export function CtaScene({ hookText }: CtaSceneProps) {
         {/* URL pill */}
         <div style={{
           fontFamily: "'JetBrains Mono', monospace",
-          fontSize: 18,
+          fontSize: 24,
           color: "#00ff41",
-          border: "1.5px solid rgba(0,255,65,0.3)",
-          borderRadius: 8,
-          padding: "10px 28px",
+          border: "2px solid rgba(0,255,65,0.3)",
+          borderRadius: 10,
+          padding: "14px 36px",
           background: "rgba(0,0,0,0.4)",
-          marginTop: 8,
+          marginTop: 12,
         }}>
           mssougra.com
         </div>
@@ -91,7 +91,7 @@ export function CtaScene({ hookText }: CtaSceneProps) {
         {/* Link in bio */}
         <div style={{
           fontFamily: "'JetBrains Mono', monospace",
-          fontSize: 14,
+          fontSize: 20,
           color: "#a3a3a3",
         }}>
           or link in bio

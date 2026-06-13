@@ -45,7 +45,7 @@ function BetCycle({ prediction }: { prediction: Tip | null }) {
   const bet = bets[cycleIndex]
   const animFrame = frame % cycleDuration
   const opacity = interpolate(animFrame, [0, 10, cycleDuration - 10, cycleDuration], [0, 1, 1, 0], { extrapolateRight: "clamp" })
-  const y = interpolate(animFrame, [0, 10], [10, 0], { extrapolateRight: "clamp", easing: Easing.bezier(0.16, 1, 0.3, 1) })
+  const y = interpolate(animFrame, [0, 10], [14, 0], { extrapolateRight: "clamp", easing: Easing.bezier(0.16, 1, 0.3, 1) })
   const color = getConfColor(bet.pct)
 
   return (
@@ -56,12 +56,12 @@ function BetCycle({ prediction }: { prediction: Tip | null }) {
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        gap: 6,
+        gap: 10,
       }}
     >
       <span style={{
         fontFamily: "'JetBrains Mono', monospace",
-        fontSize: 18,
+        fontSize: 26,
         color: "#a3a3a3",
         textTransform: "uppercase",
         letterSpacing: "0.05em",
@@ -71,9 +71,9 @@ function BetCycle({ prediction }: { prediction: Tip | null }) {
       <span style={{
         fontFamily: "Flick, sans-serif",
         fontWeight: 700,
-        fontSize: 44,
+        fontSize: 64,
         color,
-        textShadow: `0 0 20px ${color}40`,
+        textShadow: `0 0 30px ${color}50`,
         lineHeight: 1,
       }}>
         {bet.label}
@@ -81,7 +81,7 @@ function BetCycle({ prediction }: { prediction: Tip | null }) {
       <span style={{
         fontFamily: "'JetBrains Mono', monospace",
         fontWeight: 700,
-        fontSize: 28,
+        fontSize: 36,
         color,
       }}>
         {bet.pct}%
@@ -128,7 +128,7 @@ export function HookScene(props: HookSceneProps) {
           inset: 0,
           display: "flex",
           flexDirection: "column",
-          padding: "108px 50px 86px",
+          padding: "180px 50px 180px",
         }}
       >
         {/* Hook */}
@@ -140,25 +140,25 @@ export function HookScene(props: HookSceneProps) {
           <div style={{
             fontFamily: "Flick, sans-serif",
             fontWeight: 700,
-            fontSize: 72,
+            fontSize: 96,
             color: "#ffffff",
-            lineHeight: 1.1,
+            lineHeight: 1.15,
             textShadow: "0 4px 25px rgba(0,0,0,1)",
           }}>
             {props.hookText[0]}
             <br />
             <span style={{
               color: "#00ff41",
-              fontSize: 94,
-              textShadow: "0 0 40px rgba(0,255,65,0.3)",
+              fontSize: 120,
+              textShadow: "0 0 50px rgba(0,255,65,0.4)",
             }}>
               {props.hookText[1]}
             </span>
           </div>
         </div>
 
-        {/* Spacer (flex: 0.3) */}
-        <div style={{ flex: 0.3 }} />
+        {/* Spacer */}
+        <div style={{ flex: 0.5 }} />
 
         {/* Match Card */}
         <div
@@ -170,24 +170,24 @@ export function HookScene(props: HookSceneProps) {
             WebkitBackdropFilter: "blur(8px)",
             border: "2px solid rgba(0,255,65,0.25)",
             borderRadius: 24,
-            padding: "28px 20px",
+            padding: "36px 28px",
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
-            gap: 14,
+            gap: 18,
           }}
         >
           {/* FULL TIME badge */}
           <div style={{
             fontFamily: "'JetBrains Mono', monospace",
-            fontSize: 22,
+            fontSize: 28,
             color: "#00ff41",
             letterSpacing: "0.15em",
             textTransform: "uppercase",
             background: "rgba(0,255,65,0.1)",
             border: "1px solid rgba(0,255,65,0.25)",
             borderRadius: 5,
-            padding: "6px 20px",
+            padding: "8px 24px",
           }}>
             FULL TIME
           </div>
@@ -196,31 +196,31 @@ export function HookScene(props: HookSceneProps) {
           <div style={{
             display: "flex",
             alignItems: "center",
-            gap: 60,
-            marginTop: 4,
+            gap: 80,
+            marginTop: 8,
           }}>
             {/* Home */}
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}>
-              {match.home_logo ? (
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 14 }}>
+              {match.home_logo && match.home_logo !== "" ? (
                 <Img
                   src={match.home_logo}
-                  style={{ width: 90, height: 90, borderRadius: "50%", objectFit: "contain", border: "2.5px solid rgba(0,255,65,0.3)" }}
+                  style={{ width: 110, height: 110, borderRadius: "50%", objectFit: "contain", border: "2.5px solid rgba(0,255,65,0.3)" }}
                 />
               ) : (
                 <div style={{
-                  width: 90, height: 90, borderRadius: "50%",
+                  width: 110, height: 110, borderRadius: "50%",
                   border: "2.5px solid rgba(0,255,65,0.3)",
                   display: "flex", alignItems: "center", justifyContent: "center",
                   background: "rgba(255,255,255,0.05)",
                 }}>
-                  <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 24, color: "#558855" }}>H</span>
+                  <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 32, color: "#558855" }}>H</span>
                 </div>
               )}
               <span style={{
                 fontFamily: "Flick, sans-serif",
-                fontSize: 26,
+                fontSize: 34,
                 color: "#ffffff",
-                textShadow: "0 2px 8px rgba(0,0,0,0.8)",
+                textShadow: "0 2px 10px rgba(0,0,0,0.8)",
                 textAlign: "center",
               }}>
                 {match.match_home}
@@ -231,27 +231,27 @@ export function HookScene(props: HookSceneProps) {
             <BetCycle prediction={props.prediction} />
 
             {/* Away */}
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}>
-              {match.away_logo ? (
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 14 }}>
+              {match.away_logo && match.away_logo !== "" ? (
                 <Img
                   src={match.away_logo}
-                  style={{ width: 90, height: 90, borderRadius: "50%", objectFit: "contain", border: "2.5px solid rgba(0,255,65,0.3)" }}
+                  style={{ width: 110, height: 110, borderRadius: "50%", objectFit: "contain", border: "2.5px solid rgba(0,255,65,0.3)" }}
                 />
               ) : (
                 <div style={{
-                  width: 90, height: 90, borderRadius: "50%",
+                  width: 110, height: 110, borderRadius: "50%",
                   border: "2.5px solid rgba(0,255,65,0.3)",
                   display: "flex", alignItems: "center", justifyContent: "center",
                   background: "rgba(255,255,255,0.05)",
                 }}>
-                  <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 24, color: "#558855" }}>A</span>
+                  <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 32, color: "#558855" }}>A</span>
                 </div>
               )}
               <span style={{
                 fontFamily: "Flick, sans-serif",
-                fontSize: 26,
+                fontSize: 34,
                 color: "#ffffff",
-                textShadow: "0 2px 8px rgba(0,0,0,0.8)",
+                textShadow: "0 2px 10px rgba(0,0,0,0.8)",
                 textAlign: "center",
               }}>
                 {match.match_away}
@@ -263,7 +263,7 @@ export function HookScene(props: HookSceneProps) {
         {/* Watermark */}
         <div style={{
           fontFamily: "'JetBrains Mono', monospace",
-          fontSize: 12,
+          fontSize: 14,
           color: "rgba(0,255,65,0.25)",
           textAlign: "center",
           marginTop: "auto",
