@@ -201,7 +201,7 @@ State managed by `WizardContext` (React Context + `useReducer`). Steps via URL s
 | Step  | Component | What user does |
 |-------|-----------|----------------|
 | match | StepMatch | Enter API key → load matches → select one |
-| background | StepBackground | Upload bg image (or skip) |
+| background | StepBackground | Upload background image via file picker (`image/*`) → converted to data URL via `FileReader.readAsDataURL` → preview shown (or dashed placeholder if none, with text: "No image selected — video will use a black background") → "Remove" button clears it back to null. In the video, `HookScene` renders it as a `background: url(...) center/cover` on the full frame with a gradient overlay below for readability. Falls back to a dark green/red gradient `linear-gradient(135deg, #0a1f12 0%, #1a0a0a 50%, #0a1f12 100%)` when null. Data URLs work directly in Remotion input props — no server-side conversion needed. |
 | template | StepTemplate | Pick template → edit hook text |
 | audio | StepAudio | Upload/pick MP3 → set volume → drag 15s trim window → play/pause preview |
 | preview | StepPreview | Watch in-browser via Remotion Player |
