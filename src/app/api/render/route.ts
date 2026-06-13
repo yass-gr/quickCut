@@ -10,6 +10,9 @@ export async function POST(request: NextRequest) {
     const inputProps = {
       ...body,
       audioUrl: body.audioFile ? `/api/audio/${body.audioFile}` : null,
+      audioVolume: body.audioVolume ?? 100,
+      audioTrimStart: body.audioTrimStart ?? 0,
+      audioTrimEnd: body.audioTrimEnd ?? 15,
     }
     const outputPath = await renderVideo({ inputProps })
     return NextResponse.json({ success: true, outputPath })

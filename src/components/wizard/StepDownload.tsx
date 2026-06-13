@@ -28,6 +28,9 @@ export function StepDownload() {
         match: state.selectedMatch,
         prediction: state.prediction,
         audioFile: state.selectedAudio,
+        audioVolume: state.audioVolume,
+        audioTrimStart: state.audioTrimStart,
+        audioTrimEnd: state.audioTrimEnd,
       }),
     })
       .then((r) => r.json())

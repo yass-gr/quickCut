@@ -71,6 +71,9 @@ export interface WizardState {
   hookText: [string, string]
   selectedTemplate: VideoTemplate | null
   selectedAudio: string | null
+  audioVolume: number
+  audioTrimStart: number
+  audioTrimEnd: number
   renderQueue: RenderJob[]
 }
 

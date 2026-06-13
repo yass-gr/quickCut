@@ -24,6 +24,9 @@ const initialState: WizardState = {
   hookText: ["THE MODEL", "LOVES THIS"] as [string, string],
   selectedTemplate: null,
   selectedAudio: null,
+  audioVolume: 100,
+  audioTrimStart: 0,
+  audioTrimEnd: 0,
   renderQueue: [],
 }
 
@@ -34,6 +37,9 @@ type Action =
   | { type: "SET_HOOK_TEXT"; payload: [string, string] }
   | { type: "SELECT_TEMPLATE"; payload: VideoTemplate | null }
   | { type: "SELECT_AUDIO"; payload: string | null }
+  | { type: "SET_AUDIO_VOLUME"; payload: number }
+  | { type: "SET_AUDIO_TRIM_START"; payload: number }
+  | { type: "SET_AUDIO_TRIM_END"; payload: number }
   | { type: "ADD_RENDER_JOB"; payload: RenderJob }
   | { type: "UPDATE_RENDER_JOB"; payload: { id: string; status: RenderJob["status"]; progress: number; outputPath?: string; error?: string } }
   | { type: "REMOVE_RENDER_JOB"; payload: string }
@@ -50,6 +56,9 @@ function reducer(state: WizardState, action: Action): WizardState {
       if (action.payload) return { ...state, selectedTemplate: action.payload, hookText: action.payload.hookText }
       return { ...state, selectedTemplate: null }
     case "SELECT_AUDIO": return { ...state, selectedAudio: action.payload }
+    case "SET_AUDIO_VOLUME": return { ...state, audioVolume: action.payload }
+    case "SET_AUDIO_TRIM_START": return { ...state, audioTrimStart: action.payload }
+    case "SET_AUDIO_TRIM_END": return { ...state, audioTrimEnd: action.payload }
     case "ADD_RENDER_JOB": return { ...state, renderQueue: [...state.renderQueue, action.payload] }
     case "UPDATE_RENDER_JOB":
       return { ...state, renderQueue: state.renderQueue.map((j) => j.id === action.payload.id ? { ...j, ...action.payload } : j) }

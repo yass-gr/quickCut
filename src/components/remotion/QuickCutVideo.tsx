@@ -1,5 +1,4 @@
-import { AbsoluteFill, Sequence, Audio } from "remotion"
-import { useVideoConfig } from "remotion"
+import { AbsoluteFill, Sequence, Audio, useVideoConfig } from "remotion"
 import { loadFont } from "@remotion/fonts"
 import { staticFile } from "remotion"
 import { useEffect, useState } from "react"
@@ -14,10 +13,17 @@ interface QuickCutVideoProps {
   match: Match | null
   prediction: Tip | null
   audioUrl?: string | null
+  audioVolume?: number
+  audioTrimStart?: number
+  audioTrimEnd?: number
 }
 
 export function QuickCutVideo(props: QuickCutVideoProps) {
   const { fps } = useVideoConfig()
+  const totalFrames = 15 * fps
+  const trimStartFrames = (props.audioTrimStart ?? 0) * fps
+  const trimEndFrames = (props.audioTrimEnd ?? totalFrames) * fps
+  const volume = (props.audioVolume ?? 100) / 100
   const [fontsLoaded, setFontsLoaded] = useState(false)
 
   useEffect(() => {
@@ -39,7 +45,15 @@ export function QuickCutVideo(props: QuickCutVideoProps) {
 
   return (
     <AbsoluteFill style={{ background: "#000" }}>
-      {props.audioUrl && <Audio src={props.audioUrl} />}
+      {props.audioUrl && (
+        <Audio
+          src={props.audioUrl}
+          volume={(f) => {
+            if (f < trimStartFrames || f > trimEndFrames) return 0
+            return volume
+          }}
+        />
+      )}
       <Sequence from={0} durationInFrames={8 * fps}>
         <HookScene {...props} />
       </Sequence>
