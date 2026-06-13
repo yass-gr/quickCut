@@ -19,6 +19,9 @@ export function StepAudio() {
 
   useEffect(() => { trimEndRef.current = state.audioTrimEnd }, [state.audioTrimEnd])
   useEffect(() => { trimStartRef.current = state.audioTrimStart }, [state.audioTrimStart])
+  useEffect(() => {
+    if (audioRef.current) audioRef.current.volume = state.audioVolume / 100
+  }, [state.audioVolume])
 
   useEffect(() => {
     fetch("/api/audio")
@@ -36,14 +39,18 @@ export function StepAudio() {
     }
     const url = `/api/audio/${state.selectedAudio}`
     const el = new Audio(url)
+    el.volume = state.audioVolume / 100
     audioRef.current = el
     el.preload = "metadata"
     el.addEventListener("loadedmetadata", () => {
       const dur = el.duration
+      const end = Math.min(dur, 15)
       setTrackDuration(dur)
       setCurrentTime(0)
+      trimStartRef.current = 0
+      trimEndRef.current = end
       dispatch({ type: "SET_AUDIO_TRIM_START", payload: 0 })
-      dispatch({ type: "SET_AUDIO_TRIM_END", payload: Math.min(dur, 15) })
+      dispatch({ type: "SET_AUDIO_TRIM_END", payload: end })
     })
     el.addEventListener("timeupdate", () => {
       setCurrentTime(el.currentTime)
@@ -83,6 +90,7 @@ export function StepAudio() {
 
   const handleTrimStartChange = (val: number) => {
     dispatch({ type: "SET_AUDIO_TRIM_START", payload: val })
+    trimStartRef.current = val
     const el = audioRef.current
     if (el && playingRef.current) {
       if (el.currentTime < val) {
@@ -222,7 +230,9 @@ export function StepAudio() {
                   onChange={(e) => {
                     const val = Number(e.target.value)
                     handleTrimStartChange(val)
-                    dispatch({ type: "SET_AUDIO_TRIM_END", payload: Math.min(val + 15, maxEnd) })
+                    const newEnd = Math.min(val + 15, maxEnd)
+                    dispatch({ type: "SET_AUDIO_TRIM_END", payload: newEnd })
+                    trimEndRef.current = newEnd
                   }}
                   className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                 />
