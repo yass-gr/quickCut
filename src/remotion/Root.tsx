@@ -1,6 +1,20 @@
 import { Composition } from "remotion"
+import { loadFont } from "@remotion/fonts"
+import { staticFile } from "remotion"
 import type { ComponentType } from "react"
 import { QuickCutVideo } from "../components/remotion/QuickCutVideo"
+
+loadFont({
+  family: "Flick",
+  url: staticFile("fonts/FlickSs2Demo-nR6OO.ttf"),
+  weight: "400",
+})
+
+loadFont({
+  family: "Flick",
+  url: staticFile("fonts/FlickSs3Demo-1G0pv.ttf"),
+  weight: "700",
+})
 
 export const fps = 30
 
