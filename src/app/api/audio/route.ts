@@ -6,7 +6,7 @@ const AUDIO_DIR = path.join(process.cwd(), "data", "audio")
 
 export async function GET() {
   if (!fs.existsSync(AUDIO_DIR)) return NextResponse.json([])
-  const files = fs.readdirSync(AUDIO_DIR).filter((f) => f.endsWith(".mp3"))
+  const files = fs.readdirSync(AUDIO_DIR).filter((f) => f.endsWith(".mp3") && !f.includes("_trimmed_") && !f.includes("_looped_"))
   const tracks = files.map((f) => ({
     filename: f,
     name: f.replace(".mp3", "").replace(/-/g, " ").replace(/_/g, " "),

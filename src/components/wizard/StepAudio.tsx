@@ -2,17 +2,14 @@
 
 import { useState, useEffect, useRef } from "react"
 import { useWizard } from "@/context/WizardContext"
-import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import type { AudioTrack } from "@/types"
-
-const VIDEO_DURATION = 15
 
 export function StepAudio() {
   const { state, dispatch } = useWizard()
   const [tracks, setTracks] = useState<AudioTrack[]>([])
   const [loading, setLoading] = useState(true)
-  const [trackDuration, setTrackDuration] = useState(VIDEO_DURATION)
+  const [trackDuration, setTrackDuration] = useState(0)
   const audioRef = useRef<HTMLAudioElement | null>(null)
 
   useEffect(() => {
@@ -24,7 +21,7 @@ export function StepAudio() {
 
   useEffect(() => {
     if (!state.selectedAudio) {
-      setTrackDuration(VIDEO_DURATION)
+      setTrackDuration(0)
       return
     }
     const url = `/api/audio/${state.selectedAudio}`
@@ -32,9 +29,10 @@ export function StepAudio() {
     audioRef.current = el
     el.preload = "metadata"
     el.addEventListener("loadedmetadata", () => {
-      setTrackDuration(el.duration)
-      if (state.audioTrimEnd === 0 || state.audioTrimEnd > el.duration) {
-        dispatch({ type: "SET_AUDIO_TRIM_END", payload: Math.min(el.duration, VIDEO_DURATION) })
+      const dur = el.duration
+      setTrackDuration(dur)
+      if (state.audioTrimEnd === 0) {
+        dispatch({ type: "SET_AUDIO_TRIM_END", payload: Math.min(dur, 15) })
       }
     })
     return () => {
@@ -53,7 +51,8 @@ export function StepAudio() {
     setTracks(updated)
   }
 
-  const trimMax = Math.min(trackDuration, VIDEO_DURATION)
+  const segLen = Math.max(0, state.audioTrimEnd - state.audioTrimStart)
+  const maxEnd = trackDuration > 0 ? trackDuration : 15
 
   return (
     <div className="space-y-6">
@@ -115,7 +114,7 @@ export function StepAudio() {
           </div>
         </div>
 
-        {state.selectedAudio && (
+        {state.selectedAudio && trackDuration > 0 && (
           <div className="space-y-5 pt-2 border-t" style={{ borderColor: "#1b4d1b" }}>
             <p className="text-xs font-mono" style={{ color: "#00ff41" }}>Audio Controls</p>
 
@@ -135,50 +134,63 @@ export function StepAudio() {
               />
             </div>
 
-            <div className="flex items-center gap-3">
-              <div className="flex-1">
-                <label className="text-xs font-mono flex justify-between mb-1" style={{ color: "#a3a3a3" }}>
-                  <span>Start</span>
-                  <span>{state.audioTrimStart.toFixed(1)}s</span>
-                </label>
+            <div>
+              <label className="text-xs font-mono flex justify-between mb-2" style={{ color: "#a3a3a3" }}>
+                <span>Trim — drag to choose the song segment</span>
+              </label>
+
+              <div className="relative h-8">
+                <div
+                  className="absolute top-1/2 -translate-y-1/2 h-1.5 rounded-full w-full"
+                  style={{ background: "#1b4d1b" }}
+                />
+                <div
+                  className="absolute top-1/2 -translate-y-1/2 h-1.5 rounded-full"
+                  style={{
+                    background: "#00ff41",
+                    left: `${(state.audioTrimStart / maxEnd) * 100}%`,
+                    width: `${((state.audioTrimEnd - state.audioTrimStart) / maxEnd) * 100}%`,
+                  }}
+                />
                 <input
                   type="range"
                   min={0}
-                  max={trimMax}
+                  max={maxEnd}
                   step={0.1}
                   value={state.audioTrimStart}
                   onChange={(e) => {
                     const val = Number(e.target.value)
-                    dispatch({ type: "SET_AUDIO_TRIM_START", payload: val })
-                    if (val >= state.audioTrimEnd) {
-                      dispatch({ type: "SET_AUDIO_TRIM_END", payload: Math.min(val + 0.5, trimMax) })
+                    if (val < state.audioTrimEnd - 0.5) {
+                      dispatch({ type: "SET_AUDIO_TRIM_START", payload: val })
                     }
                   }}
-                  className="w-full accent-[#00ff41]"
-                  style={{ accentColor: "#00ff41" }}
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                 />
-              </div>
-              <div className="flex-1">
-                <label className="text-xs font-mono flex justify-between mb-1" style={{ color: "#a3a3a3" }}>
-                  <span>End</span>
-                  <span>{state.audioTrimEnd.toFixed(1)}s</span>
-                </label>
                 <input
                   type="range"
                   min={0}
-                  max={trimMax}
+                  max={maxEnd}
                   step={0.1}
                   value={state.audioTrimEnd}
                   onChange={(e) => {
                     const val = Number(e.target.value)
-                    dispatch({ type: "SET_AUDIO_TRIM_END", payload: val })
-                    if (val <= state.audioTrimStart) {
-                      dispatch({ type: "SET_AUDIO_TRIM_START", payload: Math.max(val - 0.5, 0) })
+                    if (val > state.audioTrimStart + 0.5) {
+                      dispatch({ type: "SET_AUDIO_TRIM_END", payload: val })
                     }
                   }}
-                  className="w-full accent-[#00ff41]"
-                  style={{ accentColor: "#00ff41" }}
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20"
                 />
+              </div>
+
+              <div className="flex justify-between text-xs font-mono mt-1" style={{ color: "#a3a3a3" }}>
+                <span>0:00</span>
+                <span>
+                  {state.audioTrimStart.toFixed(1)}s — {state.audioTrimEnd.toFixed(1)}s
+                  <span className="ml-2" style={{ color: "#00ff41" }}>
+                    ({segLen.toFixed(1)}s)
+                  </span>
+                </span>
+                <span>{formatTime(trackDuration)}</span>
               </div>
             </div>
           </div>
@@ -186,4 +198,10 @@ export function StepAudio() {
       </div>
     </div>
   )
+}
+
+function formatTime(s: number): string {
+  const m = Math.floor(s / 60)
+  const sec = Math.floor(s % 60)
+  return `${m}:${sec.toString().padStart(2, "0")}`
 }

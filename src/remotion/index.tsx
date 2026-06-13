@@ -10,7 +10,7 @@ export const RemotionRoot = () => {
       fps={30}
       width={1080}
       height={1920}
-      defaultProps={{ audioUrl: null, audioVolume: 100, audioTrimStart: 0, audioTrimEnd: 15 }}
+      defaultProps={{ audioUrl: null, audioVolume: 100 }}
     />
   )
 }

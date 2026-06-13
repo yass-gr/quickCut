@@ -2,6 +2,7 @@
 
 import { useWizard } from "@/context/WizardContext"
 import dynamic from "next/dynamic"
+import { useState, useEffect, useRef } from "react"
 import type { ComponentType } from "react"
 
 const Player = dynamic(
@@ -16,6 +17,41 @@ const QuickCutVideoComponent = dynamic(
 
 export function StepPreview() {
   const { state } = useWizard()
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+  const [trimming, setTrimming] = useState(false)
+  const trimTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    if (!state.selectedAudio) {
+      setPreviewUrl(null)
+      return
+    }
+    if (state.audioTrimStart === 0 && state.audioTrimEnd >= 15) {
+      setPreviewUrl(`/api/audio/${state.selectedAudio}`)
+      return
+    }
+    setTrimming(true)
+    if (trimTimer.current) clearTimeout(trimTimer.current)
+    trimTimer.current = setTimeout(() => {
+      fetch("/api/trim-audio", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          filename: state.selectedAudio,
+          start: state.audioTrimStart,
+          end: state.audioTrimEnd,
+        }),
+      })
+        .then((r) => r.json())
+        .then((data) => {
+          if (data.url) setPreviewUrl(data.url)
+          else setPreviewUrl(`/api/audio/${state.selectedAudio}`)
+        })
+        .catch(() => setPreviewUrl(`/api/audio/${state.selectedAudio}`))
+        .finally(() => setTrimming(false))
+    }, 600)
+    return () => { if (trimTimer.current) { clearTimeout(trimTimer.current); trimTimer.current = null } }
+  }, [state.selectedAudio, state.audioTrimStart, state.audioTrimEnd])
 
   if (!state.selectedMatch || !state.prediction) {
     return (
@@ -38,9 +74,14 @@ export function StepPreview() {
 
       <div className="flex justify-center">
         <div
-          className="aspect-[9/16] w-full max-w-[360px] rounded-lg overflow-hidden"
+          className="aspect-[9/16] w-full max-w-[360px] rounded-lg overflow-hidden relative"
           style={{ background: "#000", border: "1px solid #1b4d1b" }}
         >
+          {trimming && (
+            <div className="absolute inset-0 flex items-center justify-center z-10 bg-black/60">
+              <p className="text-xs font-mono" style={{ color: "#a3a3a3" }}>Trimming audio...</p>
+            </div>
+          )}
           <Player
             component={QuickCutVideoComponent}
             durationInFrames={15 * 30}
@@ -52,7 +93,10 @@ export function StepPreview() {
               backgroundImage: state.backgroundImage,
               match: state.selectedMatch,
               prediction: state.prediction,
-              audioUrl: state.selectedAudio ? `/api/audio/${state.selectedAudio}` : null,
+              audioUrl: previewUrl,
+              audioVolume: state.audioVolume,
+              audioTrimStart: previewUrl?.includes("_preview_") ? 0 : state.audioTrimStart,
+              audioTrimEnd: previewUrl?.includes("_preview_") ? 15 : state.audioTrimEnd,
             }}
             controls
             style={{ width: "100%", height: "100%" }}
