@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  serverExternalPackages: ["@remotion/renderer"],
+  serverExternalPackages: ["@remotion/renderer", "@remotion/bundler"],
   turbopack: {
     root: __dirname,
   },

@@ -1,0 +1,9 @@
+{
+  "id": "standard",
+  "name": "Standard",
+  "description": "Hook + Match Card with bet cycling, App Demo, and CTA",
+  "hookText": ["THE MODEL", "LOVES THIS"],
+  "showAppDemo": true,
+  "showCta": true,
+  "betCycleSeconds": 2.67
+}

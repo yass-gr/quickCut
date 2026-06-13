@@ -1,0 +1,9 @@
+{
+  "id": "quick",
+  "name": "Quick",
+  "description": "Hook + Match Card with bet cycling, no App Demo, shorter CTA",
+  "hookText": ["PICK OF", "THE DAY"],
+  "showAppDemo": false,
+  "showCta": true,
+  "betCycleSeconds": 2.0
+}
