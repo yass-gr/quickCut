@@ -3,14 +3,15 @@
 import { useWizard } from "@/context/WizardContext"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import dynamic from "next/dynamic"
+import type { ComponentType } from "react"
 
 const Player = dynamic(
-  () => import("@remotion/player").then((mod) => mod.Player),
+  () => import("@remotion/player").then((mod) => mod.Player as unknown as ComponentType<any>),
   { ssr: false }
 )
 
 const QuickCutVideoComponent = dynamic(
-  () => import("@/components/remotion/QuickCutVideo").then((mod) => mod.QuickCutVideo),
+  () => import("@/components/remotion/QuickCutVideo").then((mod) => mod.QuickCutVideo as unknown as ComponentType<any>),
   { ssr: false }
 )
 
