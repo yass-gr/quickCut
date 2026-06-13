@@ -3,24 +3,30 @@ import { renderVideo } from "@/lib/render"
 import { execSync } from "child_process"
 import path from "path"
 import fs from "fs"
+import crypto from "crypto"
 
 const AUDIO_DIR = path.join(process.cwd(), "data", "audio")
 const CACHE_DIR = path.join(process.cwd(), "data", "cache", "logos")
 
+function cacheKey(url: string): string {
+  return crypto.createHash("sha256").update(url).digest("hex").slice(0, 32)
+}
+
 async function imageToDataUrl(url: string): Promise<string | null> {
   try {
+    let fetchUrl = url
     if (url.startsWith("/api/logo-proxy")) {
-      // Read from our local cache
       const proxyUrl = new URL(url, "http://localhost").searchParams.get("url")
       if (!proxyUrl) return null
-      const key = Buffer.from(proxyUrl).toString("base64url").slice(0, 64)
+      const key = cacheKey(proxyUrl)
       const cacheFile = path.join(CACHE_DIR, `${key}.bin`)
       if (fs.existsSync(cacheFile)) {
         const buf = fs.readFileSync(cacheFile)
         return `data:image/png;base64,${buf.toString("base64")}`
       }
+      fetchUrl = proxyUrl
     }
-    const res = await fetch(url)
+    const res = await fetch(fetchUrl)
     if (!res.ok) return null
     const buf = Buffer.from(await res.arrayBuffer())
     const mime = res.headers.get("content-type") || "image/png"

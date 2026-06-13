@@ -43,9 +43,29 @@ export function StepMatch() {
 
   useEffect(() => { if (state.apiKey) fetchData() }, [fetchData, state.apiKey])
 
-  const handleSelect = (match: Match) => {
+  const [loadingLogo, setLoadingLogo] = useState<string | null>(null)
+
+  const handleSelect = async (match: Match) => {
     const tip = tips.find((t) => t.id === match.id)
-    if (tip) dispatch({ type: "SELECT_MATCH", payload: { match, prediction: tip } })
+    if (!tip) return
+
+    setLoadingLogo(match.match_home)
+
+    // Fetch logos for both teams on-demand
+    const [homeRes, awayRes] = await Promise.all([
+      fetch(`/api/team-logo?name=${encodeURIComponent(match.match_home)}`).then((r) => r.json()),
+      fetch(`/api/team-logo?name=${encodeURIComponent(match.match_away)}`).then((r) => r.json()),
+    ])
+
+    // Proxy logo URLs through our server to avoid CORS issues
+    const enriched = {
+      ...match,
+      home_logo: homeRes.url ? `/api/logo-proxy?url=${encodeURIComponent(homeRes.url)}` : undefined,
+      away_logo: awayRes.url ? `/api/logo-proxy?url=${encodeURIComponent(awayRes.url)}` : undefined,
+    }
+
+    setLoadingLogo(null)
+    dispatch({ type: "SELECT_MATCH", payload: { match: enriched, prediction: tip } })
   }
 
   const filtered = useMemo(() => {
@@ -148,7 +168,8 @@ export function StepMatch() {
             <button
               key={match.id}
               onClick={() => handleSelect(match)}
-              className="w-full text-left p-3 rounded-lg border transition-all"
+              disabled={loadingLogo === match.match_home}
+              className="w-full text-left p-3 rounded-lg border transition-all disabled:opacity-50"
               style={{
                 background: isSelected ? "rgba(0,255,65,0.08)" : "#101010",
                 borderColor: isSelected ? "#00ff41" : "#1b4d1b",

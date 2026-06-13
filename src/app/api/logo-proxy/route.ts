@@ -1,15 +1,19 @@
 import { NextRequest, NextResponse } from "next/server"
 import path from "path"
 import fs from "fs"
+import crypto from "crypto"
 
 const CACHE_DIR = path.join(process.cwd(), "data", "cache", "logos")
+
+function cacheKey(url: string): string {
+  return crypto.createHash("sha256").update(url).digest("hex").slice(0, 32)
+}
 
 export async function GET(request: NextRequest) {
   const url = request.nextUrl.searchParams.get("url")
   if (!url) return new NextResponse("Missing url", { status: 400 })
 
-  // Cache key from URL
-  const key = Buffer.from(url).toString("base64url").slice(0, 64)
+  const key = cacheKey(url)
   const cacheFile = path.join(CACHE_DIR, `${key}.bin`)
 
   // Serve from cache
