@@ -3,6 +3,7 @@
 import { createContext, useContext, useReducer, useEffect, useRef, type ReactNode } from "react"
 import { useSearchParams, useRouter, usePathname } from "next/navigation"
 import type { WizardState, Match, Tip, RenderJob, VideoTemplate, WizardStep } from "@/types"
+import type { Language } from "@/lib/translations"
 
 const STORAGE_KEY = "quickcut-wizard-state"
 
@@ -19,6 +20,8 @@ export const STEP_LABELS: Record<WizardStep, string> = {
 const initialState: WizardState = {
   apiKey: "",
   backgroundImage: null,
+  backgroundPosition: "center",
+  language: "en",
   selectedMatch: null,
   prediction: null,
   hookText: ["THE MODEL", "LOVES THIS"] as [string, string],
@@ -33,6 +36,8 @@ const initialState: WizardState = {
 type Action =
   | { type: "SET_API_KEY"; payload: string }
   | { type: "SET_BACKGROUND"; payload: string | null }
+  | { type: "SET_BACKGROUND_POSITION"; payload: string }
+  | { type: "SET_LANGUAGE"; payload: Language }
   | { type: "SELECT_MATCH"; payload: { match: Match; prediction: Tip } }
   | { type: "SET_HOOK_TEXT"; payload: [string, string] }
   | { type: "SELECT_TEMPLATE"; payload: VideoTemplate | null }
@@ -41,7 +46,7 @@ type Action =
   | { type: "SET_AUDIO_TRIM_START"; payload: number }
   | { type: "SET_AUDIO_TRIM_END"; payload: number }
   | { type: "ADD_RENDER_JOB"; payload: RenderJob }
-  | { type: "UPDATE_RENDER_JOB"; payload: { id: string; status: RenderJob["status"]; progress: number; outputPath?: string; error?: string } }
+  | { type: "UPDATE_RENDER_JOB"; payload: { id: string; status?: RenderJob["status"]; progress?: number; outputPath?: string; error?: string } }
   | { type: "REMOVE_RENDER_JOB"; payload: string }
   | { type: "CLEAR_COMPLETED" }
   | { type: "LOAD_STATE"; payload: Partial<WizardState> }
@@ -50,6 +55,8 @@ function reducer(state: WizardState, action: Action): WizardState {
   switch (action.type) {
     case "SET_API_KEY": return { ...state, apiKey: action.payload }
     case "SET_BACKGROUND": return { ...state, backgroundImage: action.payload }
+    case "SET_BACKGROUND_POSITION": return { ...state, backgroundPosition: action.payload }
+    case "SET_LANGUAGE": return { ...state, language: action.payload }
     case "SELECT_MATCH": return { ...state, selectedMatch: action.payload.match, prediction: action.payload.prediction }
     case "SET_HOOK_TEXT": return { ...state, hookText: action.payload }
     case "SELECT_TEMPLATE":

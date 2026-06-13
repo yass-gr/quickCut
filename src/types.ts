@@ -63,9 +63,13 @@ export interface RenderJob {
   createdAt: string
 }
 
+import type { Language } from "@/lib/translations"
+
 export interface WizardState {
   apiKey: string
   backgroundImage: string | null
+  backgroundPosition: string
+  language: Language
   selectedMatch: Match | null
   prediction: Tip | null
   hookText: [string, string]
