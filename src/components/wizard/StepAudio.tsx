@@ -10,7 +10,15 @@ export function StepAudio() {
   const [tracks, setTracks] = useState<AudioTrack[]>([])
   const [loading, setLoading] = useState(true)
   const [trackDuration, setTrackDuration] = useState(0)
+  const [playing, setPlaying] = useState(false)
+  const [currentTime, setCurrentTime] = useState(0)
   const audioRef = useRef<HTMLAudioElement | null>(null)
+  const playingRef = useRef(false)
+  const trimEndRef = useRef(state.audioTrimEnd)
+  const trimStartRef = useRef(state.audioTrimStart)
+
+  useEffect(() => { trimEndRef.current = state.audioTrimEnd }, [state.audioTrimEnd])
+  useEffect(() => { trimStartRef.current = state.audioTrimStart }, [state.audioTrimStart])
 
   useEffect(() => {
     fetch("/api/audio")
@@ -22,6 +30,8 @@ export function StepAudio() {
   useEffect(() => {
     if (!state.selectedAudio) {
       setTrackDuration(0)
+      setPlaying(false)
+      playingRef.current = false
       return
     }
     const url = `/api/audio/${state.selectedAudio}`
@@ -31,15 +41,73 @@ export function StepAudio() {
     el.addEventListener("loadedmetadata", () => {
       const dur = el.duration
       setTrackDuration(dur)
+      setCurrentTime(0)
       if (state.audioTrimEnd === 0) {
         dispatch({ type: "SET_AUDIO_TRIM_END", payload: Math.min(dur, 15) })
       }
     })
+    el.addEventListener("timeupdate", () => {
+      setCurrentTime(el.currentTime)
+      if (el.currentTime >= trimEndRef.current) {
+        el.pause()
+        setPlaying(false)
+        playingRef.current = false
+      }
+    })
+    el.addEventListener("ended", () => {
+      setPlaying(false)
+      playingRef.current = false
+    })
     return () => {
+      el.pause()
       el.remove()
       audioRef.current = null
     }
   }, [state.selectedAudio, dispatch])
+
+  const togglePlay = () => {
+    const el = audioRef.current
+    if (!el || trackDuration === 0) return
+
+    if (playingRef.current) {
+      el.pause()
+      setPlaying(false)
+      playingRef.current = false
+    } else {
+      el.currentTime = trimStartRef.current
+      setCurrentTime(trimStartRef.current)
+      el.play()
+      setPlaying(true)
+      playingRef.current = true
+    }
+  }
+
+  const handleTrimStartChange = (val: number) => {
+    if (val < state.audioTrimEnd - 0.5) {
+      dispatch({ type: "SET_AUDIO_TRIM_START", payload: val })
+    }
+    const el = audioRef.current
+    if (el && playingRef.current && val < state.audioTrimEnd) {
+      if (el.currentTime < val) {
+        el.currentTime = val
+        setCurrentTime(val)
+      }
+    }
+  }
+
+  const handleTrimEndChange = (val: number) => {
+    if (val > state.audioTrimStart + 0.5) {
+      dispatch({ type: "SET_AUDIO_TRIM_END", payload: val })
+    }
+    const el = audioRef.current
+    if (el && playingRef.current && val > state.audioTrimStart) {
+      if (el.currentTime >= val) {
+        el.pause()
+        setPlaying(false)
+        playingRef.current = false
+      }
+    }
+  }
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -136,7 +204,7 @@ export function StepAudio() {
 
             <div>
               <label className="text-xs font-mono flex justify-between mb-2" style={{ color: "#a3a3a3" }}>
-                <span>Trim — drag to choose the song segment</span>
+                <span>Trim — drag handles to choose the song segment</span>
               </label>
 
               <div className="relative h-8">
@@ -152,18 +220,23 @@ export function StepAudio() {
                     width: `${((state.audioTrimEnd - state.audioTrimStart) / maxEnd) * 100}%`,
                   }}
                 />
+                {playing && (
+                  <div
+                    className="absolute top-0 h-full w-0.5 z-30"
+                    style={{
+                      background: "#fff",
+                      left: `${(currentTime / maxEnd) * 100}%`,
+                      transition: "left 0.1s linear",
+                    }}
+                  />
+                )}
                 <input
                   type="range"
                   min={0}
                   max={maxEnd}
                   step={0.1}
                   value={state.audioTrimStart}
-                  onChange={(e) => {
-                    const val = Number(e.target.value)
-                    if (val < state.audioTrimEnd - 0.5) {
-                      dispatch({ type: "SET_AUDIO_TRIM_START", payload: val })
-                    }
-                  }}
+                  onChange={(e) => handleTrimStartChange(Number(e.target.value))}
                   className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                 />
                 <input
@@ -172,27 +245,43 @@ export function StepAudio() {
                   max={maxEnd}
                   step={0.1}
                   value={state.audioTrimEnd}
-                  onChange={(e) => {
-                    const val = Number(e.target.value)
-                    if (val > state.audioTrimStart + 0.5) {
-                      dispatch({ type: "SET_AUDIO_TRIM_END", payload: val })
-                    }
-                  }}
+                  onChange={(e) => handleTrimEndChange(Number(e.target.value))}
                   className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20"
                 />
               </div>
 
               <div className="flex justify-between text-xs font-mono mt-1" style={{ color: "#a3a3a3" }}>
-                <span>0:00</span>
-                <span>
-                  {state.audioTrimStart.toFixed(1)}s — {state.audioTrimEnd.toFixed(1)}s
-                  <span className="ml-2" style={{ color: "#00ff41" }}>
-                    ({segLen.toFixed(1)}s)
-                  </span>
+                <span>{formatTime(state.audioTrimStart)}</span>
+                <span style={{ color: playing ? "#00ff41" : "#a3a3a3" }}>
+                  {formatTime(currentTime)}
+                  <span className="mx-2" style={{ color: "#a3a3a3" }}>/</span>
+                  <span style={{ color: "#00ff41" }}>{segLen.toFixed(1)}s</span>
                 </span>
-                <span>{formatTime(trackDuration)}</span>
+                <span>{formatTime(state.audioTrimEnd)}</span>
               </div>
             </div>
+
+            <button
+              onClick={togglePlay}
+              className="w-full py-2.5 rounded-lg border font-mono text-xs transition-colors flex items-center justify-center gap-2"
+              style={{
+                background: playing ? "rgba(255,255,255,0.08)" : "#061206",
+                borderColor: playing ? "#fff" : "#1b4d1b",
+                color: playing ? "#fff" : "#00ff41",
+              }}
+            >
+              {playing ? (
+                <>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><rect x="6" y="4" width="4" height="16" rx="1" fill="currentColor"/><rect x="14" y="4" width="4" height="16" rx="1" fill="currentColor"/></svg>
+                  Pause
+                </>
+              ) : (
+                <>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><polygon points="6,4 20,12 6,20" fill="currentColor"/></svg>
+                  Play segment
+                </>
+              )}
+            </button>
           </div>
         )}
       </div>
