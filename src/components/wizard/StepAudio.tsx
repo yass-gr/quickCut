@@ -80,11 +80,29 @@ export function StepAudio() {
       setPlaying(false)
       playingRef.current = false
     } else {
-      el.currentTime = trimStartRef.current
-      setCurrentTime(trimStartRef.current)
-      el.play()
+      const target = trimStartRef.current
       setPlaying(true)
       playingRef.current = true
+      el.currentTime = target
+      setCurrentTime(target)
+
+      const startPlay = () => {
+        el.play().catch(() => {
+          setPlaying(false)
+          playingRef.current = false
+        })
+      }
+
+      const onSeeked = () => {
+        el.removeEventListener("seeked", onSeeked)
+        startPlay()
+      }
+      el.addEventListener("seeked", onSeeked, { once: true })
+      setTimeout(() => {
+        el.removeEventListener("seeked", onSeeked)
+        if (!playingRef.current) return
+        startPlay()
+      }, 300)
     }
   }
 
