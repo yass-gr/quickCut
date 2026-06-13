@@ -1,0 +1,164 @@
+<h2>QuickCut — TikTok-First Redesign</h2>
+<p class="subtitle">No dark app look. Background image + bold overlay text = real TikTok energy.</p>
+
+<div style="display: flex; gap: 1.25rem; flex-wrap: wrap; justify-content: center; margin-top: 1rem;">
+
+  <!-- OLD approach (for comparison) -->
+  <div style="width: 170px; opacity: 0.5;">
+    <div style="width: 100%; aspect-ratio: 9/16; background: #0a0a1a; border-radius: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0.5rem;">
+      <div style="color: #fff; font-size: 0.5rem;">Hook text</div>
+      <div style="width: 24px; height: 2px; background: #00ff41; margin: 0.3rem;"></div>
+      <div style="color: #558855; font-size: 0.2rem;">MSSOUGRA AI</div>
+    </div>
+    <div style="text-align: center; margin-top: 0.3rem; color: #a3a3a3; font-size: 0.6rem;">✕ OLD — app-like</div>
+  </div>
+
+  <!-- NEW direction -->
+  <div style="width: 170px;">
+    <div style="width: 100%; aspect-ratio: 9/16; border-radius: 8px; overflow: hidden; position: relative; background: #1a1a2e;">
+      <!-- Simulated background image (gradient placeholder) -->
+      <div style="position: absolute; inset: 0; background: linear-gradient(135deg, #1a3a2e, #2d1a1a, #0a0a1a);"></div>
+      <!-- Dark overlay for readability -->
+      <div style="position: absolute; inset: 0; background: linear-gradient(0deg, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.3) 40%, rgba(0,0,0,0.2) 100%);"></div>
+      <!-- Content -->
+      <div style="position: relative; z-index: 1; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; padding: 1rem 0.75rem;">
+        <div style="color: #00ff41; font-size: 0.3rem; font-weight: 600; margin-bottom: 0.2rem; text-shadow: 0 0 10px rgba(0,255,65,0.3);">PREDICTION</div>
+        <div style="color: #ffffff; font-size: 0.65rem; font-weight: 800; line-height: 1.1; margin-bottom: 0.3rem; text-shadow: 0 2px 8px rgba(0,0,0,0.8);">82% SAY OVER 2.5</div>
+        <div style="display: flex; align-items: center; gap: 0.3rem;">
+          <div style="width: 20px; height: 20px; border-radius: 50%; border: 2px solid #00ff41; display: flex; align-items: center; justify-content: center;">
+            <span style="color: #fff; font-size: 0.25rem; font-weight: 700;">82</span>
+          </div>
+          <span style="color: #a3a3a3; font-size: 0.2rem;">MSSOUGRA AI</span>
+        </div>
+      </div>
+    </div>
+    <div style="text-align: center; margin-top: 0.3rem; color: #00ff41; font-size: 0.6rem; font-weight: 600;">✓ NEW — TikTok style</div>
+  </div>
+
+  <!-- Another variation -->
+  <div style="width: 170px;">
+    <div style="width: 100%; aspect-ratio: 9/16; border-radius: 8px; overflow: hidden; position: relative; background: #1a1a2e;">
+      <div style="position: absolute; inset: 0; background: linear-gradient(135deg, #1a2a3a, #2d1a1a);"></div>
+      <div style="position: absolute; inset: 0; background: linear-gradient(0deg, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.2) 50%, rgba(0,0,0,0.1) 100%);"></div>
+      <div style="position: relative; z-index: 1; height: 100%; display: flex; flex-direction: column; justify-content: center; padding: 0.75rem;">
+        <div style="color: #ffffff; font-size: 0.6rem; font-weight: 800; text-align: center; text-shadow: 0 2px 10px rgba(0,0,0,0.9); line-height: 1.2;">
+          THE NUMBERS<br>DON'T LIE
+        </div>
+        <div style="width: 24px; height: 2px; background: #00ff41; margin: 0.4rem auto;"></div>
+        <div style="display: flex; justify-content: center; gap: 0.5rem;">
+          <div style="background: rgba(0,0,0,0.6); border: 1px solid rgba(0,255,65,0.3); border-radius: 4px; padding: 0.2rem 0.4rem; text-align: center;">
+            <div style="color: #a3a3a3; font-size: 0.18rem;">xG</div>
+            <div style="color: #fff; font-size: 0.35rem; font-weight: 700;">2.8</div>
+          </div>
+          <div style="background: rgba(0,0,0,0.6); border: 1px solid rgba(0,255,65,0.3); border-radius: 4px; padding: 0.2rem 0.4rem; text-align: center;">
+            <div style="color: #a3a3a3; font-size: 0.18rem;">BTTS</div>
+            <div style="color: #00ff41; font-size: 0.35rem; font-weight: 700;">68%</div>
+          </div>
+          <div style="background: rgba(0,0,0,0.6); border: 1px solid rgba(0,255,65,0.3); border-radius: 4px; padding: 0.2rem 0.4rem; text-align: center;">
+            <div style="color: #a3a3a3; font-size: 0.18rem;">FORM</div>
+            <div style="color: #5CFF6A; font-size: 0.35rem; font-weight: 700;">8.2</div>
+          </div>
+        </div>
+        <div style="color: rgba(0,255,65,0.4); font-size: 0.18rem; text-align: center; margin-top: 0.4rem;">MSSOUGRA AI</div>
+      </div>
+    </div>
+    <div style="text-align: center; margin-top: 0.3rem; color: var(--text-secondary); font-size: 0.6rem;">Stats overlaid on image</div>
+  </div>
+
+</div>
+
+<div class="section" style="margin-top: 2rem;">
+  <h3>The New Approach</h3>
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-top: 0.75rem;">
+    <div style="background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 8px; padding: 0.75rem;">
+      <div style="color: var(--accent); font-weight: 600; margin-bottom: 0.3rem;">Background Image</div>
+      <p style="font-size: 0.85rem; color: var(--text-secondary);">
+        A single full-frame background image (player photo, match action, stadium) that you select. 
+        Same image across all 5 scenes for consistency. Dark gradient overlay ensures text readability.
+      </p>
+    </div>
+    <div style="background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 8px; padding: 0.75rem;">
+      <div style="color: var(--accent); font-weight: 600; margin-bottom: 0.3rem;">Text Over Image</div>
+      <p style="font-size: 0.85rem; color: var(--text-secondary);">
+        Text sits on top of the image, not inside cards. Semi-transparent backdrop/blur behind text blocks for readability. 
+        Green accent color for key numbers and labels.
+      </p>
+    </div>
+    <div style="background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 8px; padding: 0.75rem;">
+      <div style="color: var(--accent); font-weight: 600; margin-bottom: 0.3rem;">No Card UI</div>
+      <p style="font-size: 0.85rem; color: var(--text-secondary);">
+        No #101010 card backgrounds, no border boxes. Stats use thin semi-transparent pills. 
+        Everything floats over the image. Feels like video content, not an app.
+      </p>
+    </div>
+    <div style="background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 8px; padding: 0.75rem;">
+      <div style="color: var(--accent); font-weight: 600; margin-bottom: 0.3rem;">Darija Hooks Big</div>
+      <p style="font-size: 0.85rem; color: var(--text-secondary);">
+        Hook text takes up ~60% of the screen. Big, bold, scroll-stopping. 
+        Bottom third reserved for stats/prediction. Watermark persistent top-right in small text.
+      </p>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>Background Image Option</h3>
+  <p class="subtitle">You pick one. It sits behind all 5 scenes. Overlay varies per scene.</p>
+  <div class="options" style="margin-top: 0.75rem;">
+    <div class="option" data-choice="single" onclick="toggleSelect(this)">
+      <div class="letter">A</div>
+      <div class="content">
+        <h3>Single image — same across all scenes</h3>
+        <p>Pick one player photo or match photo. Dark gradient overlay adjusts per scene (heavier on text-heavy scenes, lighter on logo scenes). Simple to implement, consistent look.</p>
+      </div>
+    </div>
+    <div class="option" data-choice="per-scene" onclick="toggleSelect(this)">
+      <div class="letter">B</div>
+      <div class="content">
+        <h3>Per-scene images</h3>
+        <p>Different image per scene (hook has one photo, match intro has logos only, etc.). More dynamic but more images to source.</p>
+      </div>
+    </div>
+    <div class="option" data-choice="video" onclick="toggleSelect(this)">
+      <div class="letter">C</div>
+      <div class="content">
+        <h3>Background video loop</h3>
+        <p>Short video clip playing behind the text. Most engaging but heaviest on rendering and file size.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>Full Timeline — TikTok Style</h3>
+  <p class="subtitle">With background image, no cards, bold text overlay</p>
+  <div style="background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 8px; padding: 1rem; margin-top: 0.75rem;">
+    <div style="display: grid; grid-template-columns: auto 1fr; gap: 0.75rem 1rem; font-size: 0.85rem;">
+      <span style="color: var(--accent); font-weight: 600;">0–2s</span>
+      <div>
+        <strong style="color: var(--text-primary);">Hook</strong>
+        <span style="color: var(--text-secondary);"> — Big text (70% of screen height) centered over image. Dark gradient overlay at 60%. Text has text-shadow for readability. Green underline accent.</span>
+      </div>
+      <span style="color: var(--accent); font-weight: 600;">2–5s</span>
+      <div>
+        <strong style="color: var(--text-primary);">Match Intro</strong>
+        <span style="color: var(--text-secondary);"> — Image still visible. Team logos overlay in bottom-center area with semi-transparent pill backdrop. League name floating above.</span>
+      </div>
+      <span style="color: var(--accent); font-weight: 600;">5–8s</span>
+      <div>
+        <strong style="color: var(--text-primary);">Prediction</strong>
+        <span style="color: var(--text-secondary);"> — Heavier bottom gradient (70%). Confidence ring + prediction value float over the image center. "MSSOUGRA AI" label above.</span>
+      </div>
+      <span style="color: var(--accent); font-weight: 600;">8–12s</span>
+      <div>
+        <strong style="color: var(--text-primary);">Stats</strong>
+        <span style="color: var(--text-secondary);"> — 3 stat pills over the image (semi-transparent bg, green accent values). Image dims to 50% brightness.</span>
+      </div>
+      <span style="color: var(--accent); font-weight: 600;">12–15s</span>
+      <div>
+        <strong style="color: var(--text-primary);">CTA</strong>
+        <span style="color: var(--text-secondary);"> — Image darkens to 20% brightness. MSSOUGRA logo and text centered. Clean brand lockup.</span>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,109 @@
+<h2>Pushing Further — Advanced Motion Graphics Options</h2>
+<p class="subtitle">Adding 3D depth, particle systems, shape morphing, and dynamic backgrounds</p>
+
+<div class="section">
+  <h3>1. 3D Camera Moves</h3>
+  <p class="subtitle">Remotion + @remotion/three or manual CSS 3D transforms</p>
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+    <div style="background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 8px; padding: 0.75rem;">
+      <span style="color: var(--accent); font-weight: 600;">Parallax dolly zoom</span>
+      <p style="font-size: 0.85rem; color: var(--text-secondary);">Camera pushes in while background scales — gives depth warp effect during transitions</p>
+    </div>
+    <div style="background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 8px; padding: 0.75rem;">
+      <span style="color: var(--accent); font-weight: 600;">Orbit around center element</span>
+      <p style="font-size: 0.85rem; color: var(--text-secondary);">Prediction ring rotates in 3D as camera arcs around it — like a product reveal</p>
+    </div>
+    <div style="background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 8px; padding: 0.75rem;">
+      <span style="color: var(--accent); font-weight: 600;">Card flip into view</span>
+      <p style="font-size: 0.85rem; color: var(--text-secondary);">Stat cards flip in from backface with a 3D rotation, landing flat</p>
+    </div>
+    <div style="background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 8px; padding: 0.75rem;">
+      <span style="color: var(--accent); font-weight: 600;">Z-space depth layers</span>
+      <p style="font-size: 0.85rem; color: var(--text-secondary);">Background, midground (logos), foreground (text) — each at different Z depths with independent camera response</p>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>2. Particle Systems</h3>
+  <p class="subtitle">@remotion/particles or custom canvas-based particle emitters</p>
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+    <div style="background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 8px; padding: 0.75rem;">
+      <span style="color: var(--accent); font-weight: 600;">Logo disassemble → reassemble</span>
+      <p style="font-size: 0.85rem; color: var(--text-secondary);">Team logo explodes into particles, particles orbit, then reform into prediction ring. Big "wow" moment.</p>
+    </div>
+    <div style="background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 8px; padding: 0.75rem;">
+      <span style="color: var(--accent); font-weight: 600;">Particle background layer</span>
+      <p style="font-size: 0.85rem; color: var(--text-secondary);">Constant ambient particles floating in background (team-colored). Creates atmosphere without distraction.</p>
+    </div>
+    <div style="background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 8px; padding: 0.75rem;">
+      <span style="color: var(--accent); font-weight: 600;">Text particle reveal</span>
+      <p style="font-size: 0.85rem; color: var(--text-secondary);">Hook text appears as particles swarming into letter shapes — like a sand effect</p>
+    </div>
+    <div style="background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 8px; padding: 0.75rem;">
+      <span style="color: var(--accent); font-weight: 600;">Data particle stream</span>
+      <p style="font-size: 0.85rem; color: var(--text-secondary);">Stats count-up has particles streaming into the numbers from below</p>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>3. Shape Morphing</h3>
+  <p class="subtitle">SVG path morphing between shapes</p>
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+    <div style="background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 8px; padding: 0.75rem;">
+      <span style="color: var(--accent); font-weight: 600;">Ring → Bar morph</span>
+      <p style="font-size: 0.85rem; color: var(--text-secondary);">Prediction confidence ring smoothly morphs into a progress bar that becomes a stat card header</p>
+    </div>
+    <div style="background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 8px; padding: 0.75rem;">
+      <span style="color: var(--accent); font-weight: 600;">Geometric transition layer</span>
+      <p style="font-size: 0.85rem; color: var(--text-secondary);">Between scenes: a geometric shape (hexagon, circle, diamond) expands to fill screen, new scene renders inside it</p>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>4. Dynamic Backgrounds</h3>
+  <p class="subtitle">Live gradients, animated meshes, color shifts</p>
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+    <div style="background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 8px; padding: 0.75rem;">
+      <span style="color: var(--accent); font-weight: 600;">Team color gradient sweeps</span>
+      <p style="font-size: 0.85rem; color: var(--text-secondary);">Background animates through home/away team colors with organic liquid gradient movement</p>
+    </div>
+    <div style="background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 8px; padding: 0.75rem;">
+      <span style="color: var(--accent); font-weight: 600;">Mesh gradient animation</span>
+      <p style="font-size: 0.85rem; color: var(--text-secondary);">Blob-style animated mesh gradients — smooth, organic color blobs shifting in background</p>
+    </div>
+  </div>
+</div>
+
+<div class="options" style="margin-top: 2rem;">
+  <div class="option" data-choice="all" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Go all-in — 3D + particles + morphs + dynamic backgrounds</h3>
+      <p>Full Google/Apple launch video treatment. Most impressive but most complex to build.</p>
+    </div>
+  </div>
+  <div class="option" data-choice="particles" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Particles + dynamic backgrounds + morph transitions, skip 3D</h3>
+      <p>Strong visual impact without 3D camera complexity. Particles and morphing cover the "wow" factor.</p>
+    </div>
+  </div>
+  <div class="option" data-choice="morph" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>Morph transitions + dynamic backgrounds, skip particles + 3D</h3>
+      <p>Clean, polished, still impressive — morph transitions and gradient backgrounds go a long way.</p>
+    </div>
+  </div>
+  <div class="option" data-choice="back" onclick="toggleSelect(this)">
+    <div class="letter">✕</div>
+    <div class="content">
+      <h3>Go back — original motion graphics proposal was fine</h3>
+      <p>Stick with spring physics, morph transitions, and parallax stacking. Keep it achievable.</p>
+    </div>
+  </div>
+</div>

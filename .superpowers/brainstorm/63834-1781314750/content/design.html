@@ -1,0 +1,138 @@
+<h2>Visual Design — Colors & Fonts</h2>
+<p class="subtitle">Establishing the look and feel for QuickCut videos + wizard UI</p>
+
+<div class="mockup">
+  <div class="mockup-header">Video Canvas — 1080×1920 (9:16)</div>
+  <div class="mockup-body">
+    <div style="display: flex; flex-direction: column; align-items: center; gap: 0.75rem;">
+
+      <!-- Letterbox frame -->
+      <div style="width: 240px; height: 426px; background: #1a1a2e; border-radius: 12px; position: relative; overflow: hidden; display: flex; flex-direction: column;">
+
+        <!-- Scene mockup -->
+        <div style="flex: 1; padding: 1rem; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 0.5rem;">
+          <div style="width: 50px; height: 50px; background: linear-gradient(135deg, #e94560, #0f3460); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 1.2rem; font-weight: bold;">AI</div>
+          <div style="height: 3px; width: 80%; background: linear-gradient(90deg, transparent, #e94560, transparent);"></div>
+          <div style="color: white; font-size: 0.7rem; font-weight: 600; letter-spacing: 0.05em;">82% CONFIDENCE</div>
+          <div style="color: rgba(255,255,255,0.6); font-size: 0.5rem;">OVER 2.5</div>
+        </div>
+
+        <!-- Watermark -->
+        <div style="position: absolute; bottom: 8px; right: 8px; color: rgba(255,255,255,0.3); font-size: 0.4rem;">MSSOUGRA AI</div>
+      </div>
+      <span style="font-size: 0.7rem; color: var(--text-secondary);">Preview — actual video at full res</span>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>Video Canvas Options</h3>
+  <p class="subtitle">The dark canvas sets the mood. Let's dial in the colors.</p>
+  <div class="options" style="margin-top: 1rem;">
+    <div class="option" data-choice="dark" onclick="toggleSelect(this)">
+      <div class="letter">A</div>
+      <div class="content">
+        <h3>Deep Navy + Accent</h3>
+        <div style="display: flex; gap: 0.4rem; margin-top: 0.4rem;">
+          <span style="width: 20px; height: 20px; border-radius: 4px; background: #0a0a1a;"></span>
+          <span style="width: 20px; height: 20px; border-radius: 4px; background: #16213e;"></span>
+          <span style="width: 20px; height: 20px; border-radius: 4px; background: #e94560;"></span>
+          <span style="width: 20px; height: 20px; border-radius: 4px; background: #0f3460;"></span>
+        </div>
+        <p>Dark, premium feel. Red accent pops against deep blue. Same vibe as Google Pixel launch videos.</p>
+      </div>
+    </div>
+    <div class="option" data-choice="black" onclick="toggleSelect(this)">
+      <div class="letter">B</div>
+      <div class="content">
+        <h3>Pure Black + Neon</h3>
+        <div style="display: flex; gap: 0.4rem; margin-top: 0.4rem;">
+          <span style="width: 20px; height: 20px; border-radius: 4px; background: #000000;"></span>
+          <span style="width: 20px; height: 20px; border-radius: 4px; background: #1a1a2e;"></span>
+          <span style="width: 20px; height: 20px; border-radius: 4px; background: #00d2ff;"></span>
+          <span style="width: 20px; height: 20px; border-radius: 4px; background: #ff2d55;"></span>
+        </div>
+        <p>True black (OLED-friendly). Neon cyan and pink accents. More energetic, sporty feel.</p>
+      </div>
+    </div>
+    <div class="option" data-choice="dynamic" onclick="toggleSelect(this)">
+      <div class="letter">C</div>
+      <div class="content">
+        <h3>Dynamic — Team Colors</h3>
+        <div style="display: flex; gap: 0.4rem; margin-top: 0.4rem;">
+          <span style="width: 20px; height: 20px; border-radius: 4px; background: #2d2d2d;"></span>
+          <span style="width: 20px; height: 20px; border-radius: 4px; background: #444444;"></span>
+          <span style="width: 20px; height: 20px; border-radius: 4px; background: linear-gradient(135deg, #e30613, #ffd700);"></span>
+          <span style="width: 20px; height: 20px; border-radius: 4px; background: linear-gradient(135deg, #003399, #00ff88);"></span>
+        </div>
+        <p>Neutral dark base, but gradient/highlight colors pulled from home team logo. Each video looks unique.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>Font Options</h3>
+  <p class="subtitle">Spec says Montserrat. But we have choices within that family + pairings.</p>
+  <div class="options">
+    <div class="option" data-choice="montserrat" onclick="toggleSelect(this)">
+      <div class="letter">A</div>
+      <div class="content">
+        <h3>Montserrat (all weights)</h3>
+        <p>Clean, geometric, versatile. Bold 700 for hooks, Medium 500 for stats, Regular 400 for body. Matches the modern sporty feel.</p>
+      </div>
+    </div>
+    <div class="option" data-choice="inter" onclick="toggleSelect(this)">
+      <div class="letter">B</div>
+      <div class="content">
+        <h3>Inter + Montserrat</h3>
+        <p>Inter for UI (wizard), Montserrat for video. Inter is more legible at small sizes — better for the wizard. Montserrat stays for the dramatic video text.</p>
+      </div>
+    </div>
+    <div class="option" data-choice="jakarta" onclick="toggleSelect(this)">
+      <div class="letter">C</div>
+      <div class="content">
+        <h3>Plus Jakarta Sans</h3>
+        <p>Similar to Montserrat but with more personality. Slightly condensed, very modern. Works for both UI and video. One font for everything.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>Wizard UI Theme</h3>
+  <p class="subtitle">Separate from the video canvas — this is what the user interacts with.</p>
+  <div class="options">
+    <div class="option" data-choice="dark-ui" onclick="toggleSelect(this)">
+      <div class="letter">A</div>
+      <div class="content">
+        <h3>Dark UI — matches video vibe</h3>
+        <div style="display: flex; gap: 0.4rem; margin-top: 0.4rem;">
+          <span style="width: 20px; height: 20px; border-radius: 4px; background: #1a1a2e;"></span>
+          <span style="width: 20px; height: 20px; border-radius: 4px; background: #2d2d44;"></span>
+          <span style="width: 20px; height: 20px; border-radius: 4px; background: #e94560;"></span>
+        </div>
+        <p>Dark mode app that previews the dark video in context. Immersive. No context-switching.</p>
+      </div>
+    </div>
+    <div class="option" data-choice="light-ui" onclick="toggleSelect(this)">
+      <div class="letter">B</div>
+      <div class="content">
+        <h3>Light UI — clean productivity</h3>
+        <div style="display: flex; gap: 0.4rem; margin-top: 0.4rem;">
+          <span style="width: 20px; height: 20px; border-radius: 4px; background: #ffffff;"></span>
+          <span style="width: 20px; height: 20px; border-radius: 4px; background: #f5f5f7;"></span>
+          <span style="width: 20px; height: 20px; border-radius: 4px; background: #e94560;"></span>
+        </div>
+        <p>Apple-style clean white interface. Easier to read form fields. Video preview is full-contrast against white.</p>
+      </div>
+    </div>
+    <div class="option" data-choice="auto-ui" onclick="toggleSelect(this)">
+      <div class="letter">C</div>
+      <div class="content">
+        <h3>System auto (follows OS theme)</h3>
+        <p>Both themes, responds to `prefers-color-scheme`. Best for developer comfort. More work to maintain.</p>
+      </div>
+    </div>
+  </div>
+</div>
