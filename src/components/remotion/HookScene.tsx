@@ -1,82 +1,273 @@
-import { AbsoluteFill, Img } from "remotion"
-import { MatchCard } from "./MatchCard"
-import type { Match, Prediction } from "@/types"
+import { AbsoluteFill, useCurrentFrame, interpolate, Easing, useVideoConfig, Img } from "remotion"
+import type { Match, Tip } from "@/types"
 
 interface HookSceneProps {
   hookText: [string, string]
   backgroundImage: string | null
-  match: Match
-  prediction: Prediction
+  match: Match | null
+  prediction: Tip | null
 }
 
-export function HookScene({ hookText, backgroundImage, match, prediction }: HookSceneProps) {
-  return (
-    <AbsoluteFill>
-      {backgroundImage ? (
-        <Img src={backgroundImage} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
-      ) : (
-        <div style={{ position: "absolute", inset: 0, background: "#000" }} />
-      )}
+const MOCK_MATCH: Match = {
+  id: 0,
+  match_home: "HOME",
+  match_away: "AWAY",
+  league: "LEAGUE",
+  kickoff: "",
+}
 
+function getConfColor(pct: number): string {
+  if (pct >= 80) return "#5CFF6A"
+  if (pct >= 60) return "#00ff41"
+  return "#a3a3a3"
+}
+
+function BetCycle({ prediction }: { prediction: Tip | null }) {
+  const frame = useCurrentFrame()
+  const { fps } = useVideoConfig()
+
+  const bets = prediction
+    ? [
+        { label: prediction._best_market_pick, sub: prediction._best_market_type, pct: prediction._best_market_prob ?? 50 },
+        { label: `${prediction._prob_home_win?.toFixed(0) ?? "?"}%`, sub: "HOME WIN", pct: prediction._prob_home_win ?? 50 },
+        { label: `${prediction._prob_away_win?.toFixed(0) ?? "?"}%`, sub: "AWAY WIN", pct: prediction._prob_away_win ?? 50 },
+        prediction._prob_btts_yes != null ? { label: prediction._prob_btts_yes > 50 ? "YES" : "NO", sub: "BTTS", pct: Math.max(prediction._prob_btts_yes, 100 - prediction._prob_btts_yes) } : null,
+        prediction._prob_over_25 != null ? { label: `O${prediction._prob_over_25 > 50 ? "2.5" : "2.5"}`, sub: "OVER/UNDER", pct: Math.max(prediction._prob_over_25, 100 - prediction._prob_over_25) } : null,
+      ].filter(Boolean) as { label: string; sub: string; pct: number }[]
+    : [
+        { label: "OVER 2.5", sub: "best", pct: 82 },
+        { label: "68%", sub: "BTTS", pct: 68 },
+        { label: "45%", sub: "HOME", pct: 45 },
+      ]
+
+  const cycleDuration = Math.round(1.5 * fps)
+  const cycleIndex = Math.floor(frame / cycleDuration) % bets.length
+  const bet = bets[cycleIndex]
+  const animFrame = frame % cycleDuration
+  const opacity = interpolate(animFrame, [0, 10, cycleDuration - 10, cycleDuration], [0, 1, 1, 0], { extrapolateRight: "clamp" })
+  const y = interpolate(animFrame, [0, 10], [10, 0], { extrapolateRight: "clamp", easing: Easing.bezier(0.16, 1, 0.3, 1) })
+  const color = getConfColor(bet.pct)
+
+  return (
+    <div
+      style={{
+        opacity,
+        transform: `translateY(${y}px)`,
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        gap: 6,
+      }}
+    >
+      <span style={{
+        fontFamily: "'JetBrains Mono', monospace",
+        fontSize: 18,
+        color: "#a3a3a3",
+        textTransform: "uppercase",
+        letterSpacing: "0.05em",
+      }}>
+        {bet.sub}
+      </span>
+      <span style={{
+        fontFamily: "Flick, sans-serif",
+        fontWeight: 700,
+        fontSize: 44,
+        color,
+        textShadow: `0 0 20px ${color}40`,
+        lineHeight: 1,
+      }}>
+        {bet.label}
+      </span>
+      <span style={{
+        fontFamily: "'JetBrains Mono', monospace",
+        fontWeight: 700,
+        fontSize: 28,
+        color,
+      }}>
+        {bet.pct}%
+      </span>
+    </div>
+  )
+}
+
+export function HookScene(props: HookSceneProps) {
+  const frame = useCurrentFrame()
+  const { fps } = useVideoConfig()
+
+  const globalOpacity = interpolate(frame, [0, Math.round(fps * 0.3)], [0, 1], { extrapolateRight: "clamp" })
+  const hookSlide = interpolate(frame, [0, fps], [-20, 0], { extrapolateRight: "clamp", easing: Easing.bezier(0.16, 1, 0.3, 1) })
+  const cardSlide = interpolate(frame, [Math.round(fps * 0.3), fps], [30, 0], { extrapolateRight: "clamp", easing: Easing.bezier(0.16, 1, 0.3, 1) })
+  const cardOpacity = interpolate(frame, [Math.round(fps * 0.3), fps], [0, 1], { extrapolateRight: "clamp" })
+
+  const match = props.match || MOCK_MATCH
+
+  return (
+    <AbsoluteFill style={{ opacity: globalOpacity }}>
+      {/* Background image */}
       <div
         style={{
           position: "absolute",
           inset: 0,
-          background:
-            "linear-gradient(180deg, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.1) 20%, rgba(0,0,0,0.35) 50%, rgba(0,0,0,0.8) 100%)",
+          background: props.backgroundImage
+            ? `url(${props.backgroundImage}) center/cover`
+            : "linear-gradient(135deg, #1a3a2e, #2d1a1a)",
+        }}
+      />
+      {/* Gradient overlay */}
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          background: "linear-gradient(180deg, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.1) 20%, rgba(0,0,0,0.35) 50%, rgba(0,0,0,0.8) 100%)",
         }}
       />
 
       <div
         style={{
-          position: "relative",
-          zIndex: 1,
-          height: "100%",
+          position: "absolute",
+          inset: 0,
           display: "flex",
           flexDirection: "column",
-          padding: "60px 24px 40px",
+          padding: "108px 50px 86px",
         }}
       >
-        <div style={{ minHeight: "30%", display: "flex", flexDirection: "column", justifyContent: "flex-start" }}>
-          <div
-            style={{
-              fontFamily: "Flick, sans-serif",
-              fontSize: 160,
-              color: "#ffffff",
-              lineHeight: 1.1,
-              textShadow: "0 4px 25px rgba(0,0,0,1)",
-              letterSpacing: "0.02em",
-            }}
-          >
-            {hookText[0]}
+        {/* Hook */}
+        <div
+          style={{
+            transform: `translateY(${hookSlide}px)`,
+          }}
+        >
+          <div style={{
+            fontFamily: "Flick, sans-serif",
+            fontWeight: 700,
+            fontSize: 72,
+            color: "#ffffff",
+            lineHeight: 1.1,
+            textShadow: "0 4px 25px rgba(0,0,0,1)",
+          }}>
+            {props.hookText[0]}
             <br />
-            <span
-              style={{
-                color: "#00ff41",
-                fontSize: 210,
-                textShadow: "0 0 40px rgba(0,255,65,0.3)",
-              }}
-            >
-              {hookText[1]}
+            <span style={{
+              color: "#00ff41",
+              fontSize: 94,
+              textShadow: "0 0 40px rgba(0,255,65,0.3)",
+            }}>
+              {props.hookText[1]}
             </span>
           </div>
         </div>
 
+        {/* Spacer (flex: 0.3) */}
         <div style={{ flex: 0.3 }} />
 
-        <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", flex: 1 }}>
-          <MatchCard match={match} prediction={prediction} />
-        </div>
-
+        {/* Match Card */}
         <div
           style={{
-            fontFamily: "JetBrains Mono, monospace",
-            fontSize: 10,
-            color: "rgba(0,255,65,0.3)",
-            textAlign: "center",
-            marginTop: "auto",
+            opacity: cardOpacity,
+            transform: `translateY(${cardSlide}px)`,
+            background: "rgba(0,0,0,0.55)",
+            backdropFilter: "blur(8px)",
+            WebkitBackdropFilter: "blur(8px)",
+            border: "2px solid rgba(0,255,65,0.25)",
+            borderRadius: 24,
+            padding: "28px 20px",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: 14,
           }}
         >
+          {/* FULL TIME badge */}
+          <div style={{
+            fontFamily: "'JetBrains Mono', monospace",
+            fontSize: 22,
+            color: "#00ff41",
+            letterSpacing: "0.15em",
+            textTransform: "uppercase",
+            background: "rgba(0,255,65,0.1)",
+            border: "1px solid rgba(0,255,65,0.25)",
+            borderRadius: 5,
+            padding: "6px 20px",
+          }}>
+            FULL TIME
+          </div>
+
+          {/* Logos + Bet cycle row */}
+          <div style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 60,
+            marginTop: 4,
+          }}>
+            {/* Home */}
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}>
+              {match.home_logo ? (
+                <Img
+                  src={match.home_logo}
+                  style={{ width: 90, height: 90, borderRadius: "50%", objectFit: "contain", border: "2.5px solid rgba(0,255,65,0.3)" }}
+                />
+              ) : (
+                <div style={{
+                  width: 90, height: 90, borderRadius: "50%",
+                  border: "2.5px solid rgba(0,255,65,0.3)",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  background: "rgba(255,255,255,0.05)",
+                }}>
+                  <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 24, color: "#558855" }}>H</span>
+                </div>
+              )}
+              <span style={{
+                fontFamily: "Flick, sans-serif",
+                fontSize: 26,
+                color: "#ffffff",
+                textShadow: "0 2px 8px rgba(0,0,0,0.8)",
+                textAlign: "center",
+              }}>
+                {match.match_home}
+              </span>
+            </div>
+
+            {/* Bet cycles here */}
+            <BetCycle prediction={props.prediction} />
+
+            {/* Away */}
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}>
+              {match.away_logo ? (
+                <Img
+                  src={match.away_logo}
+                  style={{ width: 90, height: 90, borderRadius: "50%", objectFit: "contain", border: "2.5px solid rgba(0,255,65,0.3)" }}
+                />
+              ) : (
+                <div style={{
+                  width: 90, height: 90, borderRadius: "50%",
+                  border: "2.5px solid rgba(0,255,65,0.3)",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  background: "rgba(255,255,255,0.05)",
+                }}>
+                  <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 24, color: "#558855" }}>A</span>
+                </div>
+              )}
+              <span style={{
+                fontFamily: "Flick, sans-serif",
+                fontSize: 26,
+                color: "#ffffff",
+                textShadow: "0 2px 8px rgba(0,0,0,0.8)",
+                textAlign: "center",
+              }}>
+                {match.match_away}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Watermark */}
+        <div style={{
+          fontFamily: "'JetBrains Mono', monospace",
+          fontSize: 12,
+          color: "rgba(0,255,65,0.25)",
+          textAlign: "center",
+          marginTop: "auto",
+        }}>
           MSSOUGRA AI
         </div>
       </div>

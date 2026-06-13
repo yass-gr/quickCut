@@ -1,55 +1,37 @@
 import path from "path"
 import fs from "fs"
-import { renderMedia, selectComposition, makeCancelSignal } from "@remotion/renderer"
+import { renderMedia, selectComposition } from "@remotion/renderer"
 import { bundle } from "@remotion/bundler"
-import type { QuickCutVideoProps } from "@/components/remotion/QuickCutVideo"
 
 const OUTPUT_DIR = path.join(process.cwd(), "data", "output")
 
 export interface RenderOptions {
-  inputProps: QuickCutVideoProps
+  inputProps: Record<string, unknown>
   onProgress?: (progress: number) => void
 }
 
-export async function renderVideo(
-  options: RenderOptions,
-  abortSignal?: AbortSignal
-): Promise<string> {
-  if (!fs.existsSync(OUTPUT_DIR)) {
-    fs.mkdirSync(OUTPUT_DIR, { recursive: true })
-  }
+export async function renderVideo(options: RenderOptions): Promise<string> {
+  if (!fs.existsSync(OUTPUT_DIR)) fs.mkdirSync(OUTPUT_DIR, { recursive: true })
 
   const bundled = await bundle({
-    entryPoint: path.join(process.cwd(), "src", "remotion", "index.ts"),
+    entryPoint: path.join(process.cwd(), "src", "remotion", "index.tsx"),
   })
 
-  const compositionId = "QuickCutVideo"
   const composition = await selectComposition({
     serveUrl: bundled,
-    id: compositionId,
-    inputProps: options.inputProps as unknown as Record<string, unknown>,
+    id: "QuickCutVideo",
+    inputProps: options.inputProps,
   })
 
-  const outputPath = path.join(
-    OUTPUT_DIR,
-    `quickcut-${options.inputProps.match.id}-${Date.now()}.mp4`
-  )
-
-  const { cancelSignal, cancel } = makeCancelSignal()
-  if (abortSignal) {
-    abortSignal.addEventListener("abort", cancel)
-  }
+  const outputPath = path.join(OUTPUT_DIR, `quickcut-${Date.now()}.mp4`)
 
   await renderMedia({
     composition,
     serveUrl: bundled,
     codec: "h264",
     outputLocation: outputPath,
-    inputProps: options.inputProps as unknown as Record<string, unknown>,
-    onProgress: options.onProgress
-      ? (p) => options.onProgress!(p.progress)
-      : undefined,
-    cancelSignal,
+    inputProps: options.inputProps,
+    onProgress: options.onProgress ? ({ progress }) => options.onProgress!(progress) : undefined,
   })
 
   return outputPath

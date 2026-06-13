@@ -1,75 +1,111 @@
-import { AbsoluteFill, Img, useCurrentFrame, interpolate } from "remotion"
+import { AbsoluteFill, useCurrentFrame, interpolate, Easing, useVideoConfig } from "remotion"
 
 interface CtaSceneProps {
-  backgroundImage: string | null
+  hookText: [string, string]
 }
 
-export function CtaScene({ backgroundImage }: CtaSceneProps) {
+export function CtaScene({ hookText }: CtaSceneProps) {
   const frame = useCurrentFrame()
+  const { fps } = useVideoConfig()
 
-  const opacity = interpolate(frame, [0, 10], [0, 1], {
-    extrapolateRight: "clamp",
-    extrapolateLeft: "clamp",
-  })
-
-  const urlScale = interpolate(frame, [0, 30, 60, 90], [1, 1.05, 1, 1.05], {
-    extrapolateRight: "clamp",
-    extrapolateLeft: "clamp",
-  })
+  const opacity = interpolate(frame, [0, Math.round(fps * 0.3), Math.round(fps * 3), Math.round(fps * 4)], [0, 1, 1, 1], { extrapolateRight: "clamp" })
+  const scale = interpolate(frame, [0, Math.round(fps * 0.4)], [0.9, 1], { extrapolateRight: "clamp", easing: Easing.bezier(0.16, 1, 0.3, 1) })
+  const logoZoom = interpolate(frame, [0, Math.round(fps * 0.5), Math.round(fps * 3)], [0.6, 1, 1], { extrapolateRight: "clamp", easing: Easing.bezier(0.2, 1, 0.3, 1) })
 
   return (
-    <AbsoluteFill style={{ opacity, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
-      {backgroundImage ? (
-        <Img src={backgroundImage} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
-      ) : (
-        <div style={{ position: "absolute", inset: 0, background: "#000" }} />
-      )}
+    <AbsoluteFill style={{ opacity }}>
+      <div style={{ position: "absolute", inset: 0, background: "#000" }} />
       <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.75)" }} />
       <div style={{ position: "absolute", inset: 0, background: "radial-gradient(ellipse at 50% 45%, rgba(0,255,65,0.06), transparent 60%)" }} />
 
-      <div style={{ position: "relative", zIndex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: 16,
+          transform: `scale(${scale})`,
+        }}
+      >
+        {/* AI Logo */}
         <div
           style={{
-            width: 40,
-            height: 40,
+            width: 56,
+            height: 56,
+            borderRadius: 10,
             background: "linear-gradient(135deg, #00ff41, #00cc33)",
-            borderRadius: 8,
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
+            transform: `scale(${logoZoom})`,
+            boxShadow: "0 0 30px rgba(0,255,65,0.2)",
           }}
         >
-          <span style={{ fontFamily: "JetBrains Mono, monospace", fontSize: 18, fontWeight: 700, color: "#000" }}>AI</span>
+          <span style={{
+            fontFamily: "'JetBrains Mono', monospace",
+            fontSize: 28,
+            fontWeight: 700,
+            color: "#000",
+          }}>
+            AI
+          </span>
         </div>
 
-        <div style={{ fontFamily: "Flick, sans-serif", fontSize: 60, color: "#ffffff", textShadow: "0 2px 15px rgba(0,0,0,0.8)" }}>
+        {/* MSSOUGRA */}
+        <div style={{
+          fontFamily: "Flick, sans-serif",
+          fontWeight: 700,
+          fontSize: 52,
+          color: "#ffffff",
+          textShadow: "0 2px 15px rgba(0,0,0,0.8)",
+          letterSpacing: "0.02em",
+        }}>
           MSSOUGRA
         </div>
 
-        <div style={{ width: 24, height: 2, background: "#00ff41" }} />
+        {/* Green divider */}
+        <div style={{
+          width: 32,
+          height: 3,
+          background: "#00ff41",
+          borderRadius: 2,
+        }} />
 
-        <div style={{ fontFamily: "Flick, sans-serif", fontSize: 20, color: "#ffffff", textShadow: "0 2px 10px rgba(0,0,0,0.8)" }}>
-          FULL ANALYSIS
-        </div>
-
-        <div
-          style={{
-            fontFamily: "JetBrains Mono, monospace",
-            fontSize: 14,
-            color: "#00ff41",
-            border: "1.5px solid rgba(0,255,65,0.3)",
-            borderRadius: 6,
-            padding: "8px 24px",
-            background: "rgba(0,0,0,0.4)",
-            transform: `scale(${urlScale})`,
-          }}
-        >
+        {/* URL pill */}
+        <div style={{
+          fontFamily: "'JetBrains Mono', monospace",
+          fontSize: 18,
+          color: "#00ff41",
+          border: "1.5px solid rgba(0,255,65,0.3)",
+          borderRadius: 8,
+          padding: "10px 28px",
+          background: "rgba(0,0,0,0.4)",
+          marginTop: 8,
+        }}>
           mssougra.com
         </div>
 
-        <div style={{ fontFamily: "JetBrains Mono, monospace", fontSize: 10, color: "#a3a3a3" }}>
+        {/* Link in bio */}
+        <div style={{
+          fontFamily: "'JetBrains Mono', monospace",
+          fontSize: 14,
+          color: "#a3a3a3",
+        }}>
           or link in bio
         </div>
+      </div>
+
+      {/* Watermark */}
+      <div style={{
+        position: "absolute", bottom: 20, left: 0, right: 0,
+        fontFamily: "'JetBrains Mono', monospace",
+        fontSize: 12, color: "rgba(0,255,65,0.2)",
+        textAlign: "center",
+      }}>
+        MSSOUGRA AI
       </div>
     </AbsoluteFill>
   )

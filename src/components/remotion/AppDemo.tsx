@@ -1,105 +1,188 @@
-import { AbsoluteFill, useCurrentFrame, interpolate, useVideoConfig } from "remotion"
-import { PhoneMockup } from "./PhoneMockup"
+import { AbsoluteFill, useCurrentFrame, interpolate, Easing, useVideoConfig } from "remotion"
+import type { Match, Tip } from "@/types"
 
-function LoadingSkeleton() {
+interface AppDemoProps {
+  match: Match | null
+  prediction: Tip | null
+}
+
+function ConfidenceRing({ pct }: { pct: number }) {
+  const size = 52
+  const stroke = 4
+  const r = (size - stroke) / 2
+  const circ = 2 * Math.PI * r
+  const offset = circ - (pct / 100) * circ
+  const color = pct >= 80 ? "#5CFF6A" : pct >= 60 ? "#00ff41" : "#a3a3a3"
+
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 6, padding: 8 }}>
-      <div style={{ height: 12, background: "rgba(0,255,65,0.08)", borderRadius: 2, width: "60%" }} />
-      <div style={{ height: 6, background: "rgba(0,255,65,0.05)", borderRadius: 2, width: "40%" }} />
-      <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <div style={{ width: 20, height: 20, background: "linear-gradient(135deg, #00ff41, #00cc33)", borderRadius: 4 }} />
-      </div>
-      <div style={{ height: 14, background: "rgba(0,255,65,0.1)", borderRadius: 2 }} />
-      <div style={{ height: 14, background: "rgba(0,255,65,0.08)", borderRadius: 2 }} />
-      <div style={{ height: 14, background: "rgba(0,255,65,0.06)", borderRadius: 2 }} />
-    </div>
+    <svg width={size} height={size} style={{ transform: "rotate(-90deg)" }}>
+      <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="#1b4d1b" strokeWidth={stroke} />
+      <circle
+        cx={size / 2} cy={size / 2} r={r} fill="none"
+        stroke={color} strokeWidth={stroke}
+        strokeDasharray={circ} strokeDashoffset={offset}
+        strokeLinecap="round"
+      />
+    </svg>
   )
 }
 
-function AppScreenContent() {
-  return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 4, padding: 8, fontFamily: "JetBrains Mono, monospace" }}>
-      <div style={{ fontSize: 6, color: "#d0ffd0", fontWeight: 700 }}>RACING vs BARCA</div>
-      <div style={{ fontSize: 4, color: "#a3a3a3" }}>La Liga • Today 21:00</div>
-
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", margin: "8px 0" }}>
-        <div
-          style={{
-            width: 28,
-            height: 28,
-            borderRadius: "50%",
-            border: "2px solid #00ff41",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontSize: 8,
-            color: "#00ff41",
-            fontWeight: 700,
-          }}
-        >
-          82%
-        </div>
-      </div>
-
-      <div style={{ background: "#101010", borderRadius: 4, border: "1px solid #1b4d1b", padding: 6 }}>
-        <div style={{ fontSize: 4, color: "#00ff41", textTransform: "uppercase" }}>Match Prediction</div>
-        <div style={{ fontSize: 5, color: "#ffffff", marginTop: 2 }}>OVER 2.5 Goals</div>
-        <div style={{ height: 4, background: "#1b4d1b", borderRadius: 2, marginTop: 4, overflow: "hidden" }}>
-          <div style={{ width: "82%", height: "100%", background: "#00ff41", borderRadius: 2 }} />
-        </div>
-        <div style={{ display: "flex", justifyContent: "space-between", marginTop: 2 }}>
-          <span style={{ fontSize: 3.5, color: "#a3a3a3" }}>xG: 2.1 - 1.3</span>
-          <span style={{ fontSize: 3.5, color: "#00ff41" }}>82%</span>
-        </div>
-      </div>
-
-      <div style={{ fontSize: 4, color: "#a3a3a3", marginTop: 4 }}>Confidence Breakdown</div>
-      {["HOME 45%", "DRAW 25%", "AWAY 30%", "BTTS 68%", "OV2.5 82%"].map((label, i) => {
-        const parts = label.split(" ")
-        const pct = parseInt(parts[1])
-        const color = pct >= 60 ? "#00ff41" : "#a3a3a3"
-        return (
-          <div key={i} style={{ display: "flex", alignItems: "center", gap: 4 }}>
-            <span style={{ fontSize: 3, color: "#a3a3a3", width: 24 }}>{parts[0]}</span>
-            <div style={{ flex: 1, height: 3, background: "#1b4d1b", borderRadius: 1.5, overflow: "hidden" }}>
-              <div style={{ width: `${pct}%`, height: "100%", background: color, borderRadius: 1.5 }} />
-            </div>
-            <span style={{ fontSize: 3, color, width: 12, textAlign: "right" }}>{parts[1]}</span>
-          </div>
-        )
-      })}
-    </div>
-  )
-}
-
-export function AppDemo() {
+export function AppDemo({ match, prediction }: AppDemoProps) {
   const frame = useCurrentFrame()
   const { fps } = useVideoConfig()
 
-  const loadingDuration = 0.5 * fps
-  const contentFadeStart = loadingDuration + 0.3 * fps
-  const contentFadeEnd = contentFadeStart + 0.5 * fps
-
-  const loadingOpacity = interpolate(frame, [0, loadingDuration - 10, loadingDuration], [1, 1, 0], {
-    extrapolateRight: "clamp",
-    extrapolateLeft: "clamp",
+  const slideIn = interpolate(frame, [0, Math.round(fps * 0.4)], [60, 0], {
+    extrapolateRight: "clamp", easing: Easing.bezier(0.16, 1, 0.3, 1),
   })
+  const opacity = interpolate(frame, [0, Math.round(fps * 0.15), Math.round(fps * 2.5), Math.round(fps * 3)], [0, 1, 1, 0], { extrapolateRight: "clamp" })
+  const phoneOpacity = interpolate(frame, [Math.round(fps * 0.2), Math.round(fps * 0.5)], [0, 1], { extrapolateRight: "clamp" })
 
-  const contentOpacity = interpolate(frame, [contentFadeStart, contentFadeEnd], [0, 1], {
-    extrapolateRight: "clamp",
-    extrapolateLeft: "clamp",
-  })
+  const home = match?.match_home || "HOME"
+  const away = match?.match_away || "AWAY"
+  const league = match?.league || "LEAGUE"
+  const confidence = prediction?._confidence ?? 85
+  const pctColor = confidence >= 80 ? "#5CFF6A" : confidence >= 60 ? "#00ff41" : "#a3a3a3"
 
   return (
-    <AbsoluteFill style={{ display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,0.6)" }}>
-      <PhoneMockup>
-        <div style={{ position: "absolute", inset: 4, opacity: loadingOpacity }}>
-          <LoadingSkeleton />
+    <AbsoluteFill style={{ opacity }}>
+      <div style={{ position: "absolute", inset: 0, background: "#000" }} />
+      <div style={{ position: "absolute", inset: 0, background: "radial-gradient(ellipse at 50% 55%, rgba(0,255,65,0.04), transparent 60%)" }} />
+
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: 20,
+          transform: `translateY(${slideIn}px)`,
+        }}
+      >
+        {/* Phone mockup */}
+        <div
+          style={{
+            opacity: phoneOpacity,
+            width: "55%",
+            aspectRatio: "9/19",
+            background: "#030803",
+            borderRadius: 18,
+            border: "2px solid #1b4d1b",
+            padding: 4,
+            display: "flex",
+            flexDirection: "column",
+            position: "relative",
+          }}
+        >
+          {/* Notch */}
+          <div style={{
+            width: "30%", height: 5, background: "#000",
+            borderRadius: "0 0 4px 4px", margin: "0 auto",
+          }} />
+
+          {/* Screen content */}
+          <div style={{
+            flex: 1, marginTop: 6, display: "flex", flexDirection: "column",
+            gap: 6, padding: "0 4px",
+          }}>
+            {/* App header */}
+            <div style={{
+              display: "flex", alignItems: "center", gap: 6, padding: "4px 0",
+            }}>
+              <div style={{
+                width: 18, height: 18, borderRadius: 4,
+                background: "linear-gradient(135deg, #00ff41, #00cc33)",
+                display: "flex", alignItems: "center", justifyContent: "center",
+              }}>
+                <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 8, fontWeight: 700, color: "#000" }}>AI</span>
+              </div>
+              <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, color: "#d0ffd0", fontWeight: 600 }}>
+                MSSOUGRA
+              </span>
+            </div>
+
+            {/* Match card in phone */}
+            <div style={{
+              flex: 1, display: "flex", flexDirection: "column",
+              alignItems: "center", justifyContent: "center", gap: 6,
+              background: "rgba(0,0,0,0.3)", borderRadius: 8,
+              border: "1px solid rgba(0,255,65,0.15)",
+              padding: "8px 6px",
+            }}>
+              <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 7, color: "#558855", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                {league}
+              </span>
+
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, color: "#fff", fontWeight: 600 }}>{home}</span>
+                <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 8, color: "#558855" }}>VS</span>
+                <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 9, color: "#fff", fontWeight: 600 }}>{away}</span>
+              </div>
+
+              {/* Confidence ring */}
+              <div style={{ position: "relative", width: 40, height: 40, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <ConfidenceRing pct={confidence} />
+                <span style={{ position: "absolute", fontFamily: "'JetBrains Mono', monospace", fontSize: 11, fontWeight: 700, color: pctColor }}>
+                  {confidence}
+                </span>
+              </div>
+
+              {/* Best bet row */}
+              {prediction && (
+                <div style={{
+                  display: "flex", justifyContent: "space-between", alignItems: "center",
+                  width: "100%", padding: "4px 6px",
+                  background: "rgba(0,255,65,0.05)", borderRadius: 4,
+                  border: "1px solid rgba(0,255,65,0.1)",
+                }}>
+                  <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 7, color: "#a3a3a3" }}>
+                    {prediction._best_market_type}
+                  </span>
+                  <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                    <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 8, color: "#d0ffd0", fontWeight: 600 }}>
+                      {prediction._best_market_pick}
+                    </span>
+                    <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 8, color: pctColor, fontWeight: 700 }}>
+                      {confidence}%
+                    </span>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Home indicator */}
+            <div style={{ width: "25%", height: 2, background: "#1b4d1b", borderRadius: 2, margin: "2px auto 0" }} />
+          </div>
         </div>
-        <div style={{ opacity: contentOpacity, flex: 1 }}>
-          <AppScreenContent />
+
+        {/* Labels */}
+        <div style={{
+          fontFamily: "Flick, sans-serif",
+          fontSize: 28,
+          color: "#00ff41",
+          textShadow: "0 2px 10px rgba(0,0,0,0.8)",
+        }}>
+          SEE IT IN ACTION
         </div>
-      </PhoneMockup>
+        <div style={{
+          fontFamily: "'JetBrains Mono', monospace",
+          fontSize: 14,
+          color: "#a3a3a3",
+        }}>
+          MSSOUGRA app demo
+        </div>
+      </div>
+
+      {/* Watermark */}
+      <div style={{
+        position: "absolute", bottom: 20, left: 0, right: 0,
+        fontFamily: "'JetBrains Mono', monospace",
+        fontSize: 12, color: "rgba(0,255,65,0.2)",
+        textAlign: "center",
+      }}>
+        MSSOUGRA AI
+      </div>
     </AbsoluteFill>
   )
 }
